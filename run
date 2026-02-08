@@ -1,0 +1,2 @@
+qemu-system-i386 -debugcon stdio \
+-hda build/diskimage.dd

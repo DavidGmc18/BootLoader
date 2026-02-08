@@ -1,0 +1,35 @@
+{
+    "configurations": [
+        {
+            "name": "GCC",
+            "compilerPath": "${workspaceFolder}/toolchain/i686-elf/bin/i686-elf-gcc",
+            "cStandard": "c99",
+            "cppStandard": "c++14",
+            "intelliSenseMode": "gcc-x86",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [
+                "__ELF__"
+            ],
+            "compilerArgs": [
+                "-std=c99",
+                "-ffreestanding",
+                "-nostdlib",
+                "--sysroot=${workspaceFolder}/toolchain/i686-elf",
+                "-DDEBUG"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/arch",
+                    "${workspaceFolder}/driver",
+                    "${workspaceFolder}/stage0",
+                    "${workspaceFolder}/stage1",
+                    "${workspaceFolder}/util"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            }
+        }
+    ],
+    "version": 4
+}

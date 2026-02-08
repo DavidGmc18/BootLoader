@@ -1,0 +1,61 @@
+#include <stdint.h>
+#include <driver/vga/vga_text.h>
+#include <driver/mbr/mbr.h>
+#include <selector.h>
+#include <util/printk.h>
+#include <driver/ata/ata.h>
+
+typedef void (*Start)(ATA_disk_t drive, uint8_t partition);
+
+void __attribute__((cdecl)) start() {
+    VGA_Initialize(80, 25, (uint8_t*)0xB8000);
+    VGA_clrscr();
+
+    MBR_Drive drives[4];
+    MBR_discover(drives, 4);
+
+    VGA_clrscr();
+    VGA_set_color(0x0F);    
+
+    printk("Select boot partition:\n");
+    SELECTOR_Initialize(drives);
+
+    VGA_setcursor(0, 22);
+
+    VGA_set_color(0x07);
+    printk("ARROW UP/DOWN - go up/down\n");
+    printk("ENTER - select partiton and boot\n");
+    printk("Color: ");
+    VGA_set_color(0x0F);
+    printk("WHITE");
+    VGA_set_color(0x07);
+    printk(" - marked as bootable; GRAY - marked as not bootable;");
+
+    SELECTOR_selection selection;
+    selection = SELECTOR_loop();
+
+    VGA_clrscr();
+    VGA_set_color(0x07);
+
+    printk("Selected: Drive %d Partition %d\n", selection.drive, selection.partition);
+
+    MBR_Drive boot_drive = drives[selection.drive];
+    MBR_Entry boot_partition = boot_drive.partitions[selection.partition];
+
+    printk("LBA=%d Sectors=%d\n", boot_partition.lba, boot_partition.sectors);
+
+    void* location = (void*)0x100000;
+
+    int error = ATA_read28(boot_drive.drive, boot_partition.lba, 32, location);
+
+    if (error != ATA_ERRC_SUCCESS) {
+        printk("BOOT failed!\n");
+        goto end;
+    }
+
+    Start start = (Start)location;
+    start(boot_drive.drive, selection.partition);
+
+end:
+    for (;;);
+}
