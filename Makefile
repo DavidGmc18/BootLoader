@@ -1,23 +1,30 @@
 include config.mk
 
-.PHONY: all disk_image stage0 clean always
+.PHONY: all bon disk_image stage0 clean always
 
-all: disk_image
+all: bin disk_image
 
-disk_image: $(BUILD_DIR)/diskimage.dd
+bin: $(BUILD_DIR)/BootLoader-MBR-i686.bin
 
-$(BUILD_DIR)/diskimage.dd: deps stage0 stage1 test
-	@dd if=/dev/zero of=$@ bs=512 count=8192 >/dev/null
-
+$(BUILD_DIR)/BootLoader-MBR-i686.bin: deps stage0 stage1
+	@dd if=/dev/zero of=$@ bs=1 count=16384 >/dev/null
 	@dd if=$(BUILD_DIR)/stage0.bin of=$@ conv=notrunc >/dev/null
 	@dd if=$(BUILD_DIR)/stage1.bin of=$@ bs=512 seek=1 conv=notrunc >/dev/null
+	@echo "--> Done: $@ (16 KB)"
 
-# 	TEST partition
+# Used for testing
+disk_image: $(BUILD_DIR)/diskimage.dd
+
+$(BUILD_DIR)/diskimage.dd: $(BUILD_DIR)/BootLoader-MBR-i686.bin test
+	@dd if=/dev/zero of=$@ bs=512 count=8192 >/dev/null
+
+	@dd if=$(BUILD_DIR)/BootLoader-MBR-i686.bin of=$@ conv=notrunc >/dev/null
+
 	@dd if=$(BUILD_DIR)/test.bin of=$@ bs=512 seek=32 conv=notrunc >/dev/null
 	@echo '80' | xxd -r -p | dd of=build/diskimage.dd bs=1 seek=446 conv=notrunc
 	@echo '20' /| xxd -r -p | dd of=build/diskimage.dd bs=1 seek=454 conv=notrunc
 
-	@echo "--> Created: " $@	
+	@echo "--> Created: " $@
 
 deps:
 	@$(MAKE) -C $(SOURCE_DIR)/arch BUILD_DIR=$(abspath $(BUILD_DIR))
