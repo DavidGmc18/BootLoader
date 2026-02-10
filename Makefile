@@ -23,6 +23,7 @@ $(BUILD_DIR)/diskimage.dd: $(BUILD_DIR)/BootLoader-MBR-i686.bin test
 	@dd if=$(BUILD_DIR)/test.bin of=$@ bs=512 seek=32 conv=notrunc >/dev/null
 	@echo '80' | xxd -r -p | dd of=build/diskimage.dd bs=1 seek=446 conv=notrunc
 	@echo '20' /| xxd -r -p | dd of=build/diskimage.dd bs=1 seek=454 conv=notrunc
+	@echo -n 'E01F' | xxd -r -p | dd of=build/diskimage.dd bs=1 seek=458 conv=notrunc
 
 	@echo "--> Created: " $@
 
