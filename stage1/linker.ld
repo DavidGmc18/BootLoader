@@ -12,7 +12,7 @@ SECTIONS {
     .entry : {
         __entry_start = .;
         *(.entry)
-    }
+    } > RAM
 
     .text : {
         __text_start = .;
@@ -27,7 +27,7 @@ SECTIONS {
     .rodata : {
         __rodata_start = .;
         *(.rodata)
-    } 
+    } > RAM
 
     .bss : {
         __bss_start = .;
