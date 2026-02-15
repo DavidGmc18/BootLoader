@@ -17,7 +17,7 @@ stage1: $(BUILD_DIR)/stage1.bin
 
 $(BUILD_DIR)/stage1.bin: $(OBJECTS_ASM) $(OBJECTS_C) $(MBR_DRIVER) $(ATA_DRIVER) $(VGA_DRIVER) $(ARCH_i686_LIB) $(UTIL_LIB)
 	@mkdir -p $(@D)
-	@$(TARGET_LD) $(TARGET_LINKFLAGS) -Wl,-Map=$(BUILD_DIR)/stage1.map -o $@ $^ $(TARGET_LIBS) $(MBR_DRIVER) $(ATA_DRIVER) $(VGA_DRIVER) $(ARCH_i686_LIB) $(UTIL_LIB)
+	@$(TARGET_LD) $(TARGET_LINKFLAGS) -Wl,-Map=$(BUILD_DIR)/stage1.map -o $@ $^ $(TARGET_LIBS)
 	@echo "--> Created  stage1.bin"
 
 $(BUILD_DIR)/stage1/c/%.o: %.c $(HEADERS_C)
