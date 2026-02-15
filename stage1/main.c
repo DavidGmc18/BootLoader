@@ -4,8 +4,9 @@
 #include <selector.h>
 #include <util/printk.h>
 #include <driver/ata/ata.h>
+#include "E820.h"
 
-typedef void (*Start)(ATA_disk_t drive, uint8_t partition);
+typedef void (*Start)(ATA_disk_t drive, uint8_t partition, E820_MemoryInfo* mem_info);
 
 void __attribute__((cdecl)) start() {
     VGA_Initialize(80, 25, (uint8_t*)0xB8000);
@@ -13,6 +14,9 @@ void __attribute__((cdecl)) start() {
 
     MBR_Drive drives[4];
     MBR_discover(drives, 4);
+
+    E820_MemoryInfo mem_info;
+    E820_detect(&mem_info);
 
     VGA_clrscr();
     VGA_set_color(0x0F);    
@@ -54,7 +58,7 @@ void __attribute__((cdecl)) start() {
     }
 
     Start start = (Start)location;
-    start(boot_drive.drive, selection.partition);
+    start(boot_drive.drive, selection.partition, &mem_info);
 
 end:
     for (;;);

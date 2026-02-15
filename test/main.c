@@ -15,7 +15,19 @@ void* memset(void* ptr, int value, uint16_t num) {
     return ptr;
 }
 
-void __attribute__((section(".entry"))) start(uint16_t drive, uint8_t partition) {
+typedef struct {
+    uint64_t base;
+    uint64_t length;
+    uint32_t type;
+    uint32_t ACPI;
+} E820_MemoryBlock;
+
+typedef struct {
+    uint32_t block_count;
+    E820_MemoryBlock* blocks;
+} E820_MemoryInfo;
+
+void __attribute__((section(".entry"))) start(uint16_t drive, uint8_t partition, E820_MemoryInfo* mem_info) {
     memset(&__bss_start, 0, (&__end) - (&__bss_start));
 
     VGA_Initialize(80, 25, (uint8_t*)0xB8000);
@@ -26,6 +38,8 @@ void __attribute__((section(".entry"))) start(uint16_t drive, uint8_t partition)
 
     VGA_set_color(0x07);
     printk("Boot params -> drive=%d partition=%d\n", drive, partition);
+
+    printk("MEM: %d\n", mem_info->block_count);
 
     ATA_read28(0, 0, 1, (void*)0x1000000);
 
