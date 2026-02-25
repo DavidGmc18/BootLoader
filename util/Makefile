@@ -15,17 +15,17 @@ util: $(UTIL_LIB)
 
 $(UTIL_LIB): $(OBJECTS_ASM) $(OBJECTS_C)
 	@mkdir -p $(@D)
-	@$(TARGET_AR) rcs $@ $^
+	@i686-elf-ar rcs $@ $^
 	@echo "--> Created:  util.a"
 
 $(BUILD_DIR)/util/c/%.o: %.c $(HEADERS_C)
 	@mkdir -p $(@D)
-	@$(TARGET_CC) $(TARGET_CFLAGS) -c -o $@ $<
+	@i686-elf-gcc $(TARGET_CFLAGS) -c -o $@ $<
 	@echo "--> Compiled: " $<
 
 $(BUILD_DIR)/util/asm/%.o: %.asm $(HEADERS_ASM)
 	@mkdir -p $(@D)
-	@$(TARGET_ASM) $(TARGET_ASMFLAGS) -o $@ $<
+	@nasm $(TARGET_ASMFLAGS) -o $@ $<
 	@echo "--> Compiled: " $<
 
 clean:
