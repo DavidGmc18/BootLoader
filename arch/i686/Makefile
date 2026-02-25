@@ -15,17 +15,17 @@ i686: $(ARCH_i686_LIB)
 
 $(ARCH_i686_LIB): $(OBJECTS_ASM) $(OBJECTS_C)
 	@mkdir -p $(@D)
-	@$(TARGET_AR) rcs $@ $^
+	@i686-elf-ar rcs $@ $^
 	@echo "--> Created:  arch/i686.a"
 
 $(BUILD_DIR)/arch/i686/c/%.o: %.c $(HEADERS_C)
 	@mkdir -p $(@D)
-	@$(TARGET_CC) $(TARGET_CFLAGS) -c -o $@ $<
+	@i686-elf-gcc $(TARGET_CFLAGS) -c -o $@ $<
 	@echo "--> Compiled: " $<
 
 $(BUILD_DIR)/arch/i686/asm/%.o: %.asm $(HEADERS_ASM)
 	@mkdir -p $(@D)
-	@$(TARGET_ASM) $(TARGET_ASMFLAGS) -o $@ $<
+	@nasm $(TARGET_ASMFLAGS) -o $@ $<
 	@echo "--> Compiled: " $<
 
 clean:
