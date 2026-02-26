@@ -13,7 +13,11 @@ void __attribute__((cdecl)) start() {
     VGA_clrscr();
 
     MBR_Drive drives[4];
-    MBR_discover(drives, 4);
+    uint16_t count = MBR_discover(drives, 4);
+    if (count == 0) {
+        printk("No present drives found!");
+        goto end;
+    }
 
     E820_MemoryInfo mem_info;
     E820_detect(&mem_info);

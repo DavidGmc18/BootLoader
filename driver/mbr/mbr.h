@@ -4,8 +4,6 @@
 #include <driver/ata/ata.h>
 #include <stdbool.h>
 
-#define MBR_ERRC_SUCCESS 0
-
 typedef union {
     uint32_t raw[4];
     struct {
@@ -29,4 +27,5 @@ typedef struct {
 } MBR_Drive;
 
 // drives - buffer of size n
-int MBR_discover(MBR_Drive* drives, int n);
+// return number of present drives
+uint16_t MBR_discover(MBR_Drive* drives, int n);

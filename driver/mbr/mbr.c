@@ -3,6 +3,8 @@
 #define MBR_START_WORD 223
 #define MBR_ENTRY_WORDS 8
 
+#define MBR_ERRC_SUCCESS 0
+
 int MBR_identify(ATA_disk_t disk, MBR_Entry* entries) {
     uint16_t mbr_buffer[256];
 
@@ -23,7 +25,9 @@ int MBR_identify(ATA_disk_t disk, MBR_Entry* entries) {
     return MBR_ERRC_SUCCESS;
 }
 
-int MBR_discover(MBR_Drive* drives, int n) {
+uint16_t MBR_discover(MBR_Drive* drives, int n) {
+    uint16_t count = 0;
+
     for (ATA_disk_t d = 0; d < n; d++) {
         uint16_t buffer[256];
         int error = ATA_identify(d, buffer);
@@ -35,6 +39,7 @@ int MBR_discover(MBR_Drive* drives, int n) {
 
         drives[d].present = true;
         drives[d].drive = d;
+        count++;
         
         for (int i = 0; i < 20; i++) {
             drives[d].name[i*2+0] = ((buffer[i+27] >> 8) & 0xFF);
@@ -49,5 +54,5 @@ int MBR_discover(MBR_Drive* drives, int n) {
         }
     }
 
-    return MBR_ERRC_SUCCESS;
+    return count;
 }
