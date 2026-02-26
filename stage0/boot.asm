@@ -31,8 +31,17 @@ entry:
     ; some BIOSes might start us at 07C0:0000 instead of 0000:7C00, make sure we are in the
     ; expected location
     push es
-    push word test_extensions
+    push word check_drive_number
     retf
+
+check_drive_number:
+    cmp byte [DRIVE_NUMBER], 0x80
+    jae test_extensions
+
+    mov si, warn_drive_number_not_specified
+    call print
+
+    mov byte [DRIVE_NUMBER], 0x80
 
 test_extensions:
     mov ah, 41h
@@ -41,14 +50,18 @@ test_extensions:
     clc ; clear carry flag
     int 13h
 
-    mov si, err_extensions_not_present
-    jc error ; Set on extentions not present
+    jc .error ; Set on extentions not present
 
     cmp bx, 0xAA55
-    jnz error
+    jnz .error
 
     test cx, 1 ; get bit one
-    jz error ; check for DAP
+    jnz load_second_stage ; check for DAP
+
+.error:
+    mov si, err_extensions_not_present
+    call print
+    jmp halt
 
 load_second_stage:
     mov dword [DAP_LBA], 1      ; LBA low
@@ -87,8 +100,7 @@ load_second_stage:
     pop di
 
     ; Check
-    mov si, err_disk_reset_failed
-    jc error
+    jc .disk_reset_error
 
     dec di
     test di, di
@@ -96,7 +108,8 @@ load_second_stage:
 
     ; Attempts exhausted
     mov si, err_disk_read_failed
-    jmp error
+    call print
+    jmp halt
 
 .success:
     mov ax, 0x0500
@@ -107,17 +120,31 @@ load_second_stage:
 
     jmp halt
 
+.disk_reset_error:
+    mov si, err_disk_reset_failed
+    call print
+    jmp halt
+
+
 ; si - Error string
-error:
+print:
+    pusha
+
+.loop:
     lodsb
     or al, al
-    jz halt
+    jz .return
 
     mov ah, 0Eh
     mov bh, 0
     int 10h
 
-    jmp error
+    jmp .loop
+
+.return:
+    popa
+    ret
+
 
 halt:
     cli
@@ -126,6 +153,7 @@ halt:
 
 %define ENDL 0x0D, 0x0A
 
+warn_drive_number_not_specified: db 'Warn: BIOS did not specify drive number, using 0x80', ENDL, 0
 err_extensions_not_present: db 'Error: Disk extensions not present', ENDL, 0
 err_disk_read_failed: db 'Error: Disk read failed', ENDL, 0
 err_disk_reset_failed: db 'Error: Disk reset failed', ENDL, 0
