@@ -13,7 +13,11 @@ void __attribute__((cdecl)) start() {
     VGA_Initialize(80, 25, (uint8_t*)0xB8000);
     VGA_clrscr();
 
-    AHCI_print_drives();
+    AHCI_probe_drives();
+
+    for (int i = 0; i < 32; i++) {
+        printk("%d ", AHCI_drives[i]);
+    }
 
     // MBR_Drive drives[4];
     // uint16_t count = MBR_discover(drives, 4);
