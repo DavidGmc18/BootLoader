@@ -1,5 +1,4 @@
 #include "ahci.h"
-#include <stdint.h>
 #include <driver/pci/pci.h>
 #include <util/printk.h>
 
@@ -54,14 +53,10 @@ typedef volatile struct {
 #define	SATA_SIG_SEMB	0xC33C0101	// Enclosure management bridge
 #define	SATA_SIG_PM	0x96690101	// Port multiplier
 
-#define AHCI_DEV_NULL 0
-#define AHCI_DEV_SATA 1
-#define AHCI_DEV_SEMB 2
-#define AHCI_DEV_PM 3
-#define AHCI_DEV_SATAPI 4
-
 #define HBA_PORT_IPM_ACTIVE 1
 #define HBA_PORT_DET_PRESENT 3
+
+uint8_t AHCI_drives[32];
 
 // Check device type
 static int check_type(HBA_PORT *port) {
@@ -88,35 +83,24 @@ static int check_type(HBA_PORT *port) {
 	}
 }
 
-void AHCI_print_drives() {
-    pci_address_t ahci_address = PCI_find_SATA(0);
+int AHCI_probe_drives() {
+    pci_address_t ahci_address = PCI_find_SATA();
     if (ahci_address.enabled == 0) {
         printk("ERROR: AHCI not found!\n");
-        return;
+        return -1;
     }
-    printk("AHCI: %x:%x.%x\n", ahci_address.bus, ahci_address.device, ahci_address.function);
 
     ahci_address.offset = 0x24;
-    HBA_MEM* abar = (HBA_MEM*)PCI_read_config(ahci_address);
-    printk("ACHI BAR5: 0x%x\n", abar);
+    HBA_MEM* abar = (HBA_MEM*)PCI_read_config(ahci_address);;
 
     uint32_t pi = abar->pi;
     int i = 0;
     while (i < 32) {
         if (pi & 1) {
-            int dt = check_type(&abar->ports[i]);
-            if (dt == AHCI_DEV_SATA) {
-				printk("SATA drive found at port %d\n", i);
-			} else if (dt == AHCI_DEV_SATAPI) {
-				printk("SATAPI drive found at port %d\n", i);
-			} else if (dt == AHCI_DEV_SEMB) {
-				printk("SEMB drive found at port %d\n", i);
-			} else if (dt == AHCI_DEV_PM) {
-				printk("PM drive found at port %d\n", i);
-			} else {
-				printk("No drive found at port %d\n", i);
-			}
-        }   
+            AHCI_drives[i] =  check_type(&abar->ports[i]);
+        } else {
+            AHCI_drives[i] = 0;
+        }
 
         pi >>= 1;
         i++;
