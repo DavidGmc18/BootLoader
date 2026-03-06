@@ -1,9 +1,11 @@
 ENTRY(entry)
 OUTPUT_FORMAT("binary")
-phys = 0x00000500;
+phys = 0x0500;
 
 MEMORY {
-    RAM (rwx) : ORIGIN = 0x0500, LENGTH = 0x7700
+    RAM (rwx) :     ORIGIN = 0x0500, LENGTH = 0x7500
+    STACK (rw) :    ORIGIN = 0x8000, LENGTH = 0x2000
+    /* FREE MEM : 0x10000 - 0x80000 */
 }
 
 SECTIONS {
@@ -35,4 +37,6 @@ SECTIONS {
     }  > RAM
     
     __end = .;
+
+    __stack_top = ORIGIN(STACK) + LENGTH(STACK);
 }
