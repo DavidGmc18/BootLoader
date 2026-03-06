@@ -8,6 +8,8 @@ extern __end
 extern start
 global entry
 
+extern __stack_top
+
 entry:
     cli
 
@@ -15,7 +17,7 @@ entry:
     mov ds, ax
     mov es, ax
     mov ss, ax
-    mov sp, 0xFFF0
+    mov sp, __stack_top
     mov bp, sp
 
 enable_pmode:
@@ -35,6 +37,8 @@ enable_pmode:
     mov ax, 0x10
     mov ds, ax
     mov ss, ax
+
+    mov esp, __stack_top
 
     ; clear bss (uninitialized data)
     mov edi, __bss_start
