@@ -1,14 +1,13 @@
 #include <stdint.h>
 #include <driver/vga/vga_text.h>
-#include <driver/mbr/mbr.h>
 #include <selector.h>
 #include <util/printk.h>
-#include <driver/ata/ata.h>
 #include "E820.h"
 #include <driver/pci/pci.h>
 #include <driver/ahci/ahci.h>
 
-typedef void (*Start)(ATA_disk_t drive, uint8_t partition, E820_MemoryInfo* mem_info);
+// TODO
+// typedef void (*Start)(ATA_disk_t drive, uint8_t partition, E820_MemoryInfo* mem_info);
 
 void __attribute__((cdecl)) start() {
     VGA_Initialize(80, 25, (uint8_t*)0xB8000);
@@ -28,6 +27,15 @@ void __attribute__((cdecl)) start() {
     int error = AHCI_read(ahci_abar, 0, (AHCI_LBA_48){0}, 1, buffer);
     printk("AHCI: read error=%d\n", error);
     printk("%x\n", buffer[255]);
+
+    AHCI_identify(ahci_abar, 0, buffer);
+    char drive_name[41];
+    for (int i = 0; i < 20; i++) {
+        drive_name[i*2+0] = ((buffer[i+27] >> 8) & 0xFF);
+        drive_name[i*2+1] = (buffer[i+27] & 0xFF);
+    }
+    drive_name[40] = '\0';
+    printk("Drive0: %s", drive_name);
 
     // MBR_Drive drives[4];
     // uint16_t count = MBR_discover(drives, 4);

@@ -47,4 +47,5 @@ typedef struct {
 	uint8_t  rsv1[4];	// Reserved
 } FIS_REG_H2D;
 
-void FIS_set_reg_h2d(FIS_REG_H2D* cmdfis, AHCI_LBA_48 lba, uint32_t count);
+void FIS_set_reg_h2d_read(FIS_REG_H2D* cmdfis, AHCI_LBA_48 lba, uint32_t count);
+void FIS_set_reg_h2d_identify(FIS_REG_H2D* cmdfis);
