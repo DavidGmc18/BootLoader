@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <driver/vga/vga_text.h>
 #include <util/printk.h>
-#include <driver/ata/ata.h>
 
 extern uint8_t __bss_start;
 extern uint8_t __end;
@@ -41,7 +40,7 @@ void __attribute__((section(".entry"))) start(uint16_t drive, uint8_t partition,
 
     printk("MEM: %d\n", mem_info->block_count);
 
-    ATA_read28(0, 0, 1, (void*)0x1000000);
+    // ATA_read28(0, 0, 1, (void*)0x1000000);
 
     for (;;);
 }
