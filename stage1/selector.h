@@ -1,13 +1,13 @@
-#pragma once
+// #pragma once
 
-#include <driver/mbr/mbr.h>
+// #include "mbr.h"
 
-// drives - len is 4
-void SELECTOR_Initialize(MBR_Drive* drives);
+// // drives - len is 4
+// void SELECTOR_Initialize(MBR_Drive* drives);
 
-typedef struct {
-    ATA_disk_t drive;
-    uint8_t partition;
-} SELECTOR_selection;
+// typedef struct {
+//     ATA_disk_t drive;
+//     uint8_t partition;
+// } SELECTOR_selection;
 
-SELECTOR_selection SELECTOR_loop();
+// SELECTOR_selection SELECTOR_loop();

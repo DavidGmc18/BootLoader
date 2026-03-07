@@ -22,7 +22,5 @@ export ARCH_i686_LIB = $(BUILD_DIR)/arch/i686.a
 export UTIL_LIB = $(BUILD_DIR)/util.a
 
 export VGA_DRIVER = $(BUILD_DIR)/driver/vga.a
-export ATA_DRIVER = $(BUILD_DIR)/driver/ata.a
-export MBR_DRIVER = $(BUILD_DIR)/driver/mbr.a
 export PCI_DRIVER = $(BUILD_DIR)/driver/pci.a
 export AHCI_DRIVER = $(BUILD_DIR)/driver/ahci.a
