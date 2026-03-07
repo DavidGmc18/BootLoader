@@ -65,6 +65,66 @@ void AHCI_map_devs(AHCI_dev_map* dev_map, void* abar) {
 #define ATA_DEV_BUSY 0x80
 #define ATA_DEV_DRQ 0x08
 
+static int wait_port_idle(HBA_PORT* port) {
+    int spin = 0;
+    while ((port->tfd & (ATA_DEV_BUSY | ATA_DEV_DRQ)) && spin < 1000000) {
+		i686_iowait();
+        spin++;
+    }
+    if (spin == 1000000) return -1; // Port hung (timed out after ~ 0.4s)
+
+    return 0;
+}
+
+static int wait_command_finish(HBA_PORT* port, uint8_t slot) {
+    // TODO implement timeout
+    while (1) {
+        if ((port->ci & (1 << slot)) == 0) break;
+
+		if (port->is & (1 << 27)) return -1;
+		if (port->is & (1 << 28)) return -1;
+		if (port->is & (1 << 29)) return -1;
+        if (port->is & (1 << 30)) return -1;
+        if (port->tfd & 0x01) return -1;
+		i686_iowait();
+    }
+
+	return 0;
+}
+
+int AHCI_identify(void* abar, uint8_t port_no, uint16_t* buffer) {
+    HBA_MEM* hba_mem = (HBA_MEM*)abar;
+	HBA_PORT* port = &hba_mem->ports[port_no];
+
+    uint32_t used_slots = (port->ci | port->sact);
+	uint8_t slot = 0;
+	while (slot < 32) {
+		if (!(used_slots & (1 << slot)))
+			break;
+		slot++;
+	}
+	if (slot >= 32)
+		return -1;
+
+    HBA_CMD_HEADER* cmdheader = (HBA_CMD_HEADER*)port->clb;
+    cmdheader += slot;
+	HBA_set_cmd_header(cmdheader, READ, 1);
+
+    HBA_CMD_TBL* cmdtbl = (HBA_CMD_TBL*)(uintptr_t)cmdheader->ctba;
+	HBA_set_cmd_table(cmdtbl, 0, buffer, 1, NO_INTERRUPT_ON_COMPLETION);
+
+    FIS_REG_H2D* cmdfis = (FIS_REG_H2D*)(&cmdtbl->cfis);
+	FIS_set_reg_h2d_identify(cmdfis);
+
+    if (wait_port_idle(port))
+        return -1;
+
+	// Issue the command
+    port->ci |= (1 << slot);
+
+    return wait_command_finish(port, slot);
+}
+
 // Only supports up to 2^13 sectors
 // port->ci can change and became taken mid-function, this should not happen for single-threaded system
 int AHCI_read(void* abar, uint8_t port_no, AHCI_LBA_48 lba, uint32_t count, uint16_t* buffer) {
@@ -90,30 +150,13 @@ int AHCI_read(void* abar, uint8_t port_no, AHCI_LBA_48 lba, uint32_t count, uint
 	HBA_set_cmd_table(cmdtbl, 0, buffer, count, NO_INTERRUPT_ON_COMPLETION);
 
     FIS_REG_H2D* cmdfis = (FIS_REG_H2D*)(&cmdtbl->cfis);
-	FIS_set_reg_h2d(cmdfis, lba, count);
+	FIS_set_reg_h2d_read(cmdfis, lba, count);
 
-	// Wait for port to be idle
-    int spin = 0;
-    while ((port->tfd & (ATA_DEV_BUSY | ATA_DEV_DRQ)) && spin < 1000000) {
-		i686_iowait();
-        spin++;
-    }
-    if (spin == 1000000) return -1; // Port hung (timed out after ~ 0.4s)
+    if (wait_port_idle(port))
+        return -1;
 
 	// Issue the command
     port->ci |= (1 << slot);
 
-	// Wait for read to finish
-    while (1) {
-        if ((port->ci & (1 << slot)) == 0) break;
-
-		if (port->is & (1 << 27)) return -1;
-		if (port->is & (1 << 28)) return -1;
-		if (port->is & (1 << 29)) return -1;
-        if (port->is & (1 << 30)) return -1;
-        if (port->tfd & 0x01) return -1;
-		i686_iowait();
-    }
-
-	return 0;
+    return wait_command_finish(port, slot);
 }

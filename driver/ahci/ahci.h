@@ -18,6 +18,8 @@ typedef struct {
 
 void AHCI_map_devs(AHCI_dev_map* dev_map, void* abar);
 
+int AHCI_identify(void* abar, uint8_t port, uint16_t* buffer);
+
 typedef union {
     struct {
         uint16_t low;
