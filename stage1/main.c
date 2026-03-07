@@ -5,6 +5,7 @@
 #include <util/printk.h>
 #include <driver/ata/ata.h>
 #include "E820.h"
+#include <driver/pci/pci.h>
 #include <driver/ahci/ahci.h>
 
 typedef void (*Start)(ATA_disk_t drive, uint8_t partition, E820_MemoryInfo* mem_info);
@@ -13,11 +14,20 @@ void __attribute__((cdecl)) start() {
     VGA_Initialize(80, 25, (uint8_t*)0xB8000);
     VGA_clrscr();
 
-    AHCI_probe_drives();
+    pci_address_t sata_address = PCI_find_SATA();
+    void* ahci_abar = AHCI_get_abar(sata_address);
+    AHCI_dev_map dev_map;
+    AHCI_map_devs(&dev_map, ahci_abar);
 
     for (int i = 0; i < 32; i++) {
-        printk("%d ", AHCI_drives[i]);
+        printk("%d ", dev_map.dev[i]);
     }
+    printk("\n");
+
+    uint16_t buffer[256];
+    int error = AHCI_read(ahci_abar, 0, (AHCI_LBA_48){0}, 1, buffer);
+    printk("AHCI: read error=%d\n", error);
+    printk("%x\n", buffer[255]);
 
     // MBR_Drive drives[4];
     // uint16_t count = MBR_discover(drives, 4);
