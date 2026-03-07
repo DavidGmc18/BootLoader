@@ -1,93 +1,153 @@
 #include <stdint.h>
 #include <driver/vga/vga_text.h>
-#include <selector.h>
 #include <util/printk.h>
 #include "E820.h"
 #include <driver/pci/pci.h>
 #include <driver/ahci/ahci.h>
+#include "mbr.h"
+#include <arch/i686/io.h>
 
-// TODO
-// typedef void (*Start)(ATA_disk_t drive, uint8_t partition, E820_MemoryInfo* mem_info);
+// TODO pass drive properly
+typedef void (*Start)(uint16_t drive, uint8_t partition, E820_MemoryInfo* mem_info);
+
+#define MAX_BOOTABLE_PARTITIONS 20
+MBR_Bootable_Partition bootable_partitions[MAX_BOOTABLE_PARTITIONS];
+uint8_t bootable_partitions_count = 0;
 
 void __attribute__((cdecl)) start() {
     VGA_Initialize(80, 25, (uint8_t*)0xB8000);
     VGA_clrscr();
 
     pci_address_t sata_address = PCI_find_SATA();
-    void* ahci_abar = AHCI_get_abar(sata_address);
-    AHCI_dev_map dev_map;
-    AHCI_map_devs(&dev_map, ahci_abar);
+    void* abar = AHCI_get_abar(sata_address);
 
-    for (int i = 0; i < 32; i++) {
-        printk("%d ", dev_map.dev[i]);
-    }
-    printk("\n");
+    AHCI_dev_map dev_map;
+    AHCI_map_devs(&dev_map, abar);
 
     uint16_t buffer[256];
-    int error = AHCI_read(ahci_abar, 0, (AHCI_LBA_48){0}, 1, buffer);
-    printk("AHCI: read error=%d\n", error);
-    printk("%x\n", buffer[255]);
+    for (uint8_t port = 0; port < 32; port++) {
+        if (dev_map.dev[port] != AHCI_DEV_SATA)
+            continue;
 
-    AHCI_identify(ahci_abar, 0, buffer);
-    char drive_name[41];
-    for (int i = 0; i < 20; i++) {
-        drive_name[i*2+0] = ((buffer[i+27] >> 8) & 0xFF);
-        drive_name[i*2+1] = (buffer[i+27] & 0xFF);
+        MBR_Table mbr_table;
+        if (MBR_get_table(&mbr_table, abar, port))
+            continue;
+
+        if (AHCI_identify(abar, port, buffer))
+            continue;
+
+        for (uint8_t partition = 0; partition < 4; partition++) {
+
+            if (!MBR_is_bootable(mbr_table.entries[partition]))
+                continue;
+
+            bootable_partitions[bootable_partitions_count].port = port;
+            bootable_partitions[bootable_partitions_count].partition = partition;
+            bootable_partitions[bootable_partitions_count].base = mbr_table.entries[partition].lba;
+            bootable_partitions[bootable_partitions_count].sectors = mbr_table.entries[partition].sectors;
+
+            bool flag = false;
+            uint8_t i = 40;
+            while (i-- > 0) {
+                char ch = (i & 1) ? (buffer[i/2+27] & 0xFF) : ((buffer[i/2+27] >> 8) & 0xFF);
+                if (ch != 0x20 && ch != 0x00)
+                    flag = true;
+                bootable_partitions[bootable_partitions_count].drive_name[i] = (flag) ? ch : 0x00;
+            }
+            bootable_partitions[bootable_partitions_count].drive_name[40] = '\0';
+
+            bootable_partitions_count++;
+            if (bootable_partitions_count >= MAX_BOOTABLE_PARTITIONS)
+                break;
+        }
+
+        if (bootable_partitions_count >= MAX_BOOTABLE_PARTITIONS)
+            break;
     }
-    drive_name[40] = '\0';
-    printk("Drive0: %s", drive_name);
 
-    // MBR_Drive drives[4];
-    // uint16_t count = MBR_discover(drives, 4);
-    // if (count == 0) {
-    //     printk("No present drives found!");
-    //     goto end;
-    // }
+    VGA_clrscr();
+    printk("Select partition:\n");
 
-    // E820_MemoryInfo mem_info;
-    // E820_detect(&mem_info);
+    for (uint8_t i = 0; i < bootable_partitions_count; i++) {
+        printk("  Drive-%d  %s  Partition-%d ", bootable_partitions[i].port, bootable_partitions[i].drive_name, bootable_partitions[i].partition);
 
-    // VGA_clrscr();
-    // VGA_set_color(0x0F);    
+        if (bootable_partitions[i].sectors < 2048) {
+            printk("(%d.%dKib)\n", bootable_partitions[i].sectors/2, (bootable_partitions[i].sectors%2)*5);
+        } else if (bootable_partitions[i].sectors < 2097152) {
+            printk("(%d.%dMib)\n", bootable_partitions[i].sectors/2048, ((bootable_partitions[i].sectors%2048)*10)/2048);
+        } else {
+            printk("(%d.%dGib)\n", bootable_partitions[i].sectors/2097152, (((uint64_t)bootable_partitions[i].sectors%2097152)*10)/2097152);
+        }
+    }
 
-    // printk("Select boot partition:\n");
-    // SELECTOR_Initialize(drives);
+    if (bootable_partitions_count == 0) {
+        printk("  No bootable partitions!\n");
+        goto end;
+    }
 
-    // VGA_setcursor(0, 22);
+    uint8_t CURSOR = 0;
+    for (int x = 2; x < 78; x ++) {
+        VGA_putcolor(x, 1, 0x70);
+    }
 
-    // VGA_set_color(0x07);
-    // printk("ARROW UP/DOWN - go up/down\n");
-    // printk("ENTER - select partiton and boot\n");
-    // printk("Color: ");
-    // VGA_set_color(0x0F);
-    // printk("WHITE");
-    // VGA_set_color(0x07);
-    // printk(" - marked as bootable; GRAY - marked as not bootable;");
+    int running = 1;
+    while (running) {
+        uint8_t status = i686_inb(0x64);
+        if (status & 0x01) {
+            uint8_t key_code = i686_inb(0x60);
+            switch (key_code) {
+                // UP
+                case 0x48:
+                    if (CURSOR == 0)
+                        break;
+                    for (int x = 2; x < 78; x ++) {
+                        VGA_putcolor(x, CURSOR+1, 0x07);
+                    }
+                    CURSOR--;
+                    for (int x = 2; x < 78; x ++) {
+                        VGA_putcolor(x, CURSOR+1, 0x70);
+                    }
+                    break;
+                
+                // DOWN
+                case 0x50:
+                    if (CURSOR+1 >= bootable_partitions_count)
+                        break;
+                    for (int x = 2; x < 78; x ++) {
+                        VGA_putcolor(x, CURSOR+1, 0x07);
+                    }
+                    CURSOR++;
+                    for (int x = 2; x < 78; x ++) {
+                        VGA_putcolor(x, CURSOR+1, 0x70);
+                    }
+                    break;
+                
+                // ENTER
+                case 0x1C:
+                    running = 0;
+                    break;
+                
+                default:
+                    break;
+            }
+        }
+        i686_iowait();
+    }
 
-    // SELECTOR_selection selection;
-    // selection = SELECTOR_loop();
+    VGA_clrscr();
 
-    // VGA_clrscr();
-    // VGA_set_color(0x07);
+    void* location = (void*)0x100000;
 
-    // printk("Selected: Drive %d Partition %d\n", selection.drive, selection.partition);
+    if (AHCI_read(abar, bootable_partitions[CURSOR].port, (AHCI_LBA_48){.low=bootable_partitions[CURSOR].base}, 32, location)) {
+        printk("BOOT failed!\n");
+        goto end;
+    }
 
-    // MBR_Drive boot_drive = drives[selection.drive];
-    // MBR_Entry boot_partition = boot_drive.partitions[selection.partition];
+    E820_MemoryInfo mem_info;
+    E820_detect(&mem_info);
 
-    // printk("LBA=%d Sectors=%d\n", boot_partition.lba, boot_partition.sectors);
-
-    // void* location = (void*)0x100000;
-
-    // int error = ATA_read28(boot_drive.drive, boot_partition.lba, 32, location);
-
-    // if (error != ATA_ERRC_SUCCESS) {
-    //     printk("BOOT failed!\n");
-    //     goto end;
-    // }
-
-    // Start start = (Start)location;
-    // start(boot_drive.drive, selection.partition, &mem_info);
+    Start start = (Start)location;
+    start(0, bootable_partitions[CURSOR].partition, &mem_info);
 
 end:
     for (;;);
