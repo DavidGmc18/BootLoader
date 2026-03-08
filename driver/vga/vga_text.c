@@ -1,5 +1,5 @@
 #include "vga_text.h"
-#include <arch/i686/io.h>
+#include <arch/i686/i686.h>
 #include <stdbool.h>
 
 uint16_t ScreenWidth;

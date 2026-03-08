@@ -4,18 +4,7 @@
 #include "hba.h"
 #include "fis.h"
 #include <arch/i686/i686.h>
-
-///////////////////////////////////////////////////////////////////////////
-// TODO move this somewhere and optimize
-static void* memset(void* ptr, int value, uint32_t n) {
-    uint8_t* u8Ptr = (uint8_t*)ptr;
-
-    for (uint32_t i = 0; i < n; i++)
-        u8Ptr[i] = (uint8_t)value;
-
-    return ptr;
-}
-///////////////////////////////////////////////////////////////////////////
+#include <util/memory.h>
 
 #define MAX_PORTS 8
 #define MAX_SLOTS 4
