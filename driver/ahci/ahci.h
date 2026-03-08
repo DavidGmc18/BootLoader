@@ -16,7 +16,7 @@ typedef struct {
     uint8_t dev[32];
 } AHCI_dev_map;
 
-void AHCI_map_devs(AHCI_dev_map* dev_map, void* abar);
+void AHCI_init(void* abar, AHCI_dev_map* dev_map);
 
 int AHCI_identify(void* abar, uint8_t port, uint16_t* buffer);
 

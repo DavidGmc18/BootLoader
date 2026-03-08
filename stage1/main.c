@@ -5,7 +5,7 @@
 #include <driver/pci/pci.h>
 #include <driver/ahci/ahci.h>
 #include "mbr.h"
-#include <arch/i686/io.h>
+#include <arch/i686/i686.h>
 
 // TODO pass drive properly
 typedef void (*Start)(uint16_t drive, uint8_t partition, E820_MemoryInfo* mem_info);
@@ -22,7 +22,7 @@ void __attribute__((cdecl)) start() {
     void* abar = AHCI_get_abar(sata_address);
 
     AHCI_dev_map dev_map;
-    AHCI_map_devs(&dev_map, abar);
+    AHCI_init(abar, &dev_map);
 
     uint16_t buffer[256];
     for (uint8_t port = 0; port < 32; port++) {

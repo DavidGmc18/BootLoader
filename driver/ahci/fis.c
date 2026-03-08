@@ -34,7 +34,7 @@ void FIS_set_reg_h2d_identify(FIS_REG_H2D* cmdfis) {
     cmdfis->lba3 = 0;
     cmdfis->lba4 = 0;
     cmdfis->lba5 = 0;
-    cmdfis->device = 0;
+    cmdfis->device = 0xA0;
 
     cmdfis->countl = 0;
     cmdfis->counth = 0;
