@@ -1,5 +1,5 @@
 #pragma once
 
-#include <include/types.h>
+#include <bl/types.h>
 
-int E820_detect(MemoryInfo* mem_info);
+int E820_detect(BL_MemoryInfo* mem_info);

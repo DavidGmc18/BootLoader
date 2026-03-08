@@ -6,7 +6,7 @@
 int MBR_get_table(MBR_Table* table, void* abar, uint8_t port) {
     uint16_t buffer[256];
 
-    int error = AHCI_read(abar, port, (LBA48){0}, 1, buffer);
+    int error = AHCI_read(abar, port, (BL_LBA48){0}, 1, buffer);
     if (error)
         return error;
 

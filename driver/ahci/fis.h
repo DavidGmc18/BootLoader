@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-#include <include/types.h>
+#include <bl/types.h>
 
 typedef enum {
 	FIS_TYPE_REG_H2D	= 0x27,	// Register FIS - host to device
@@ -47,5 +47,5 @@ typedef struct {
 	uint8_t  rsv1[4];	// Reserved
 } FIS_REG_H2D;
 
-void FIS_set_reg_h2d_read(FIS_REG_H2D* cmdfis, LBA48 lba, uint32_t count);
+void FIS_set_reg_h2d_read(FIS_REG_H2D* cmdfis, BL_LBA48 lba, uint32_t count);
 void FIS_set_reg_h2d_identify(FIS_REG_H2D* cmdfis);

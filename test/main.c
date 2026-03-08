@@ -1,4 +1,4 @@
-#include <include/boot.h>
+#include <bl/boot.h>
 #include <stdint.h>
 
 extern uint8_t __bss_start;
@@ -13,7 +13,7 @@ void* memset(void* ptr, int value, uint16_t num) {
     return ptr;
 }
 
-void __attribute__((section(".entry"))) start(BootInfo* boot_info, BootServices* boot_services) {
+void __attribute__((section(".entry"))) start(BL_BootInfo* boot_info, BL_BootServices* boot_services) {
     memset(&__bss_start, 0, (&__end) - (&__bss_start));
 
     boot_services->printk("TEST!!!\n");
@@ -35,7 +35,7 @@ void __attribute__((section(".entry"))) start(BootInfo* boot_info, BootServices*
     boot_services->printk("}\n");
 
     uint16_t buffer[256];
-    boot_services->disk_read(boot_info->disk.abar, boot_info->disk.port, (LBA48){0}, 1, buffer);
+    boot_services->disk_read(boot_info->disk.abar, boot_info->disk.port, (BL_LBA48){0}, 1, buffer);
     boot_services->printk("Test disk read => 0x%x\n", buffer[255]);
     
     while (1)

@@ -3,7 +3,6 @@
 #include <stdint.h>
 #include <driver/ahci/ahci.h>
 #include <stdbool.h>
-#include <include/types.h>
 
 typedef union {
     uint32_t raw[4];

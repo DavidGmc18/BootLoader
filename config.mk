@@ -8,7 +8,7 @@ export LIBS =
 
 export TARGET = $(SOURCE_DIR)/toolchain/i686-elf/bin/i686-elf
 export TARGET_ASMFLAGS = -f elf
-export TARGET_CFLAGS = -std=c99 -g -Os -DDEBUG -ffreestanding -nostdlib -I. -I$(SOURCE_DIR)
+export TARGET_CFLAGS = -std=c99 -g -Os -DDEBUG -ffreestanding -nostdlib -I. -I$(SOURCE_DIR) -I$(SOURCE_DIR)/include
 export TARGET_LINKFLAGS =
 export TARGET_LIBS = -lgcc
 

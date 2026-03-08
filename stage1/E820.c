@@ -1,9 +1,9 @@
 #include "E820.h"
 
-int __attribute__((cdecl)) i686_E820GetNextBlock(MemoryBlock* block, uint32_t* continuationId);
+int __attribute__((cdecl)) i686_E820GetNextBlock(BL_MemoryBlock* block, uint32_t* continuationId);
 
-int E820_detect(MemoryInfo* mem_info) {
-    MemoryBlock block;
+int E820_detect(BL_MemoryInfo* mem_info) {
+    BL_MemoryBlock block;
     uint32_t continuation = 0;
 
     mem_info->block_count = 0;
