@@ -1,6 +1,5 @@
+#include <include/boot.h>
 #include <stdint.h>
-#include <driver/vga/vga_text.h>
-#include <util/printk.h>
 
 extern uint8_t __bss_start;
 extern uint8_t __end;
@@ -14,37 +13,30 @@ void* memset(void* ptr, int value, uint16_t num) {
     return ptr;
 }
 
-typedef struct {
-    void* abar;
-    uint8_t port;
-    uint8_t partition_id;
-} BootDisk;
-
-typedef struct {
-    uint64_t base;
-    uint64_t length;
-    uint32_t type;
-    uint32_t ACPI;
-} E820_MemoryBlock;
-
-typedef struct {
-    uint32_t block_count;
-    E820_MemoryBlock* blocks;
-} E820_MemoryInfo;
-
-void __attribute__((section(".entry"))) start(BootDisk* boot_disk, E820_MemoryInfo* mem_info) {
+void __attribute__((section(".entry"))) start(BootInfo* boot_info, BootServices* boot_services) {
     memset(&__bss_start, 0, (&__end) - (&__bss_start));
 
-    VGA_Initialize(80, 25, (uint8_t*)0xB8000);
-    VGA_clrscr();
+    boot_services->printk("TEST OS!!!\n");
 
-    VGA_set_color(0xD0);
-    printk("TEST OS!!!\n");
+    boot_services->printk("boot_info = {\n");
+    boot_services->printk("  disk = {\n");
+    boot_services->printk("    abar = 0x%x\n", boot_info->disk.abar);
+    boot_services->printk("    port = %d\n", boot_info->disk.port);
+    boot_services->printk("    partition = {\n");
+    boot_services->printk("      id = %d\n", boot_info->disk.partition.id);
+    boot_services->printk("      lba = %d\n", boot_info->disk.partition.lba);
+    boot_services->printk("      sectors = %d\n", boot_info->disk.partition.sectors);
+    boot_services->printk("    }\n");
+    boot_services->printk("  drive_name = '%s'\n", boot_info->disk.drive_name);
+    boot_services->printk("  memory_info = {\n");
+    boot_services->printk("    block_count = %d\n", boot_info->memory_info.block_count);
+    boot_services->printk("    blocks[256]\n");
+    boot_services->printk("  }\n");
+    boot_services->printk("}\n");
 
-    VGA_set_color(0x07);
-    printk("Boot params -> port=%d partition=%d\n", boot_disk->port, boot_disk->partition_id);
-
-    printk("MEM: %d\n", mem_info->block_count);
-
+    uint16_t buffer[256];
+    boot_services->disk_read(boot_info->disk.abar, boot_info->disk.port, (LBA48){0}, 1, buffer);
+    boot_services->printk("Test disk read => 0x%x\n", buffer[255]);
+    
     for (;;);
 }

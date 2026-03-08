@@ -254,7 +254,7 @@ int AHCI_identify(void* abar, uint8_t port_no, uint16_t* buffer) {
 
 // Only supports up to 2^13 sectors
 // port->ci can change and became taken mid-function, this should not happen for single-threaded system
-int AHCI_read(void* abar, uint8_t port_no, AHCI_LBA_48 lba, uint32_t count, uint16_t* buffer) {
+int AHCI_read(void* abar, uint8_t port_no, LBA48 lba, uint32_t count, uint16_t* buffer) {
     if (port_no >= MAX_PORTS || cmd_headers[port_no] == NULL)
         return -1;
 

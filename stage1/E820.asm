@@ -64,7 +64,7 @@
 
 %endmacro
 
-; int __attribute__((cdecl)) i686_E820GetNextBlock(E820_MemoryBlock* block, uint32_t* continuationId);
+; int __attribute__((cdecl)) i686_E820GetNextBlock(MemoryBlock* block, uint32_t* continuationId);
 E820Signature   equ 0x534D4150
 
 global i686_E820GetNextBlock

@@ -6,21 +6,16 @@
 #include <driver/ahci/ahci.h>
 #include "mbr.h"
 #include <arch/i686/i686.h>
+#include <include/boot.h>
 
-typedef struct {
-    void* abar;
-    uint8_t port;
-    uint8_t partition_id;
-} BootDisk;
+typedef void (*Start)(BootInfo*, BootServices*);
 
-typedef void (*Start)(BootDisk*, E820_MemoryInfo*);
+BootInfo boot_info __attribute__((section(".boot_info")));
+BootServices boot_services __attribute__((section(".boot_info")));
 
-BootDisk boot_disk __attribute__((section(".boot_info")));
-E820_MemoryInfo mem_info __attribute__((section(".boot_info")));
-
-#define MAX_BOOTABLE_PARTITIONS 20
-MBR_Bootable_Partition bootable_partitions[MAX_BOOTABLE_PARTITIONS];
-uint8_t bootable_partitions_count = 0;
+#define MAX_BOOTABLE_DISKS 20
+Disk bootable_disk[MAX_BOOTABLE_DISKS];
+uint8_t bootable_disk_count = 0;
 
 void __attribute__((cdecl)) start() {
     VGA_Initialize(80, 25, (uint8_t*)0xB8000);
@@ -44,15 +39,17 @@ void __attribute__((cdecl)) start() {
         if (AHCI_identify(abar, port, buffer))
             continue;
 
-        for (uint8_t partition = 0; partition < 4; partition++) {
+        for (uint8_t partition_id = 0; partition_id < 4; partition_id++) {
 
-            if (!MBR_is_bootable(mbr_table.entries[partition]))
+            if (!MBR_is_bootable(mbr_table.entries[partition_id]))
                 continue;
 
-            bootable_partitions[bootable_partitions_count].port = port;
-            bootable_partitions[bootable_partitions_count].partition = partition;
-            bootable_partitions[bootable_partitions_count].base = mbr_table.entries[partition].lba;
-            bootable_partitions[bootable_partitions_count].sectors = mbr_table.entries[partition].sectors;
+            bootable_disk[bootable_disk_count].abar = abar;
+            bootable_disk[bootable_disk_count].port = port;
+
+            bootable_disk[bootable_disk_count].partition.id = partition_id;
+            bootable_disk[bootable_disk_count].partition.lba = mbr_table.entries[partition_id].lba;
+            bootable_disk[bootable_disk_count].partition.sectors = mbr_table.entries[partition_id].sectors;
 
             bool flag = false;
             uint8_t i = 40;
@@ -60,35 +57,35 @@ void __attribute__((cdecl)) start() {
                 char ch = (i & 1) ? (buffer[i/2+27] & 0xFF) : ((buffer[i/2+27] >> 8) & 0xFF);
                 if (ch != 0x20 && ch != 0x00)
                     flag = true;
-                bootable_partitions[bootable_partitions_count].drive_name[i] = (flag) ? ch : 0x00;
+                bootable_disk[bootable_disk_count].drive_name[i] = (flag) ? ch : 0x00;
             }
-            bootable_partitions[bootable_partitions_count].drive_name[40] = '\0';
+            bootable_disk[bootable_disk_count].drive_name[40] = '\0';
 
-            bootable_partitions_count++;
-            if (bootable_partitions_count >= MAX_BOOTABLE_PARTITIONS)
+            bootable_disk_count++;
+            if (bootable_disk_count >= MAX_BOOTABLE_DISKS)
                 break;
         }
 
-        if (bootable_partitions_count >= MAX_BOOTABLE_PARTITIONS)
+        if (bootable_disk_count >= MAX_BOOTABLE_DISKS)
             break;
     }
 
     VGA_clrscr();
     printk("Select partition:\n");
 
-    for (uint8_t i = 0; i < bootable_partitions_count; i++) {
-        printk("  Drive-%d  %s  Partition-%d ", bootable_partitions[i].port, bootable_partitions[i].drive_name, bootable_partitions[i].partition);
+    for (uint8_t i = 0; i < bootable_disk_count; i++) {
+        printk("  Drive-%d  %s  Partition-%d ", bootable_disk[i].port, bootable_disk[i].drive_name, bootable_disk[i].partition);
 
-        if (bootable_partitions[i].sectors < 2048) {
-            printk("(%d.%dKib)\n", bootable_partitions[i].sectors/2, (bootable_partitions[i].sectors%2)*5);
-        } else if (bootable_partitions[i].sectors < 2097152) {
-            printk("(%d.%dMib)\n", bootable_partitions[i].sectors/2048, ((bootable_partitions[i].sectors%2048)*10)/2048);
+        if (bootable_disk[i].partition.sectors < 2048) {
+            printk("(%d.%dKib)\n", bootable_disk[i].partition.sectors/2, (bootable_disk[i].partition.sectors%2)*5);
+        } else if (bootable_disk[i].partition.sectors < 2097152) {
+            printk("(%d.%dMib)\n", bootable_disk[i].partition.sectors/2048, ((bootable_disk[i].partition.sectors%2048)*10)/2048);
         } else {
-            printk("(%d.%dGib)\n", bootable_partitions[i].sectors/2097152, (((uint64_t)bootable_partitions[i].sectors%2097152)*10)/2097152);
+            printk("(%d.%dGib)\n", bootable_disk[i].partition.sectors/2097152, (((uint64_t)bootable_disk[i].partition.sectors%2097152)*10)/2097152);
         }
     }
 
-    if (bootable_partitions_count == 0) {
+    if (bootable_disk_count == 0) {
         printk("  No bootable partitions!\n");
         goto end;
     }
@@ -119,7 +116,7 @@ void __attribute__((cdecl)) start() {
                 
                 // DOWN
                 case 0x50:
-                    if (CURSOR+1 >= bootable_partitions_count)
+                    if (CURSOR+1 >= bootable_disk_count)
                         break;
                     for (int x = 2; x < 78; x ++) {
                         VGA_putcolor(x, CURSOR+1, 0x07);
@@ -146,23 +143,20 @@ void __attribute__((cdecl)) start() {
 
     void* location = (void*)0x100000;
 
-    if (AHCI_read(abar, bootable_partitions[CURSOR].port, (AHCI_LBA_48){.low=bootable_partitions[CURSOR].base}, 32, location)) {
+    if (AHCI_read(abar, bootable_disk[CURSOR].port, (LBA48){.low=bootable_disk[CURSOR].partition.lba}, 32, location)) {
         printk("BOOT failed!\n");
         goto end;
     }
 
-    boot_disk.abar = abar;
-    boot_disk.port = bootable_partitions[CURSOR].port;
-    boot_disk.partition_id = bootable_partitions[CURSOR].partition;
+    boot_info.disk = bootable_disk[CURSOR];
+    E820_detect(&boot_info.memory_info);
 
-    E820_detect(&mem_info);
+    boot_services.printk = printk;
+    boot_services.disk_read = AHCI_read;
 
-    sizeof(E820_MemoryBlock);
-    sizeof(E820_MemoryInfo);
-    sizeof(BootDisk);
-
+    VGA_clrscr();
     Start start = (Start)location;
-    start(&boot_disk, &mem_info);
+    start(&boot_info, &boot_services);
 
 end:
     for (;;);

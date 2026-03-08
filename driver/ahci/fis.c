@@ -2,7 +2,7 @@
 
 #define ATA_CMD_READ_DMA_EX 0x25
 
-void FIS_set_reg_h2d_read(FIS_REG_H2D* cmdfis, AHCI_LBA_48 lba, uint32_t count) {
+void FIS_set_reg_h2d_read(FIS_REG_H2D* cmdfis, LBA48 lba, uint32_t count) {
 	cmdfis->fis_type = FIS_TYPE_REG_H2D;
     cmdfis->c = 1;	// Is a command
     cmdfis->command = ATA_CMD_READ_DMA_EX;
