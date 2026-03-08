@@ -159,5 +159,6 @@ void __attribute__((cdecl)) start() {
     start(&boot_info, &boot_services);
 
 end:
-    for (;;);
+    while (1)
+        i686_hlt();
 }
