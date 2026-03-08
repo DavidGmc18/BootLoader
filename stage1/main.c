@@ -7,8 +7,16 @@
 #include "mbr.h"
 #include <arch/i686/i686.h>
 
-// TODO pass drive properly
-typedef void (*Start)(uint16_t drive, uint8_t partition, E820_MemoryInfo* mem_info);
+typedef struct {
+    void* abar;
+    uint8_t port;
+    uint8_t partition_id;
+} BootDisk;
+
+typedef void (*Start)(BootDisk*, E820_MemoryInfo*);
+
+BootDisk boot_disk __attribute__((section(".boot_info")));
+E820_MemoryInfo mem_info __attribute__((section(".boot_info")));
 
 #define MAX_BOOTABLE_PARTITIONS 20
 MBR_Bootable_Partition bootable_partitions[MAX_BOOTABLE_PARTITIONS];
@@ -143,11 +151,18 @@ void __attribute__((cdecl)) start() {
         goto end;
     }
 
-    E820_MemoryInfo mem_info;
+    boot_disk.abar = abar;
+    boot_disk.port = bootable_partitions[CURSOR].port;
+    boot_disk.partition_id = bootable_partitions[CURSOR].partition;
+
     E820_detect(&mem_info);
 
+    sizeof(E820_MemoryBlock);
+    sizeof(E820_MemoryInfo);
+    sizeof(BootDisk);
+
     Start start = (Start)location;
-    start(0, bootable_partitions[CURSOR].partition, &mem_info);
+    start(&boot_disk, &mem_info);
 
 end:
     for (;;);

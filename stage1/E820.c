@@ -2,29 +2,22 @@
 
 int __attribute__((cdecl)) i686_E820GetNextBlock(E820_MemoryBlock* block, uint32_t* continuationId);
 
-#define MAX_BLOCKS 256
-
-static E820_MemoryBlock mem_blocks[MAX_BLOCKS];
-static uint32_t block_count;
-
-void E820_detect(E820_MemoryInfo* mem_info) {
+int E820_detect(E820_MemoryInfo* mem_info) {
     E820_MemoryBlock block;
     uint32_t continuation = 0;
 
-    block_count = 0;
-    int ret = i686_E820GetNextBlock(&block, &continuation);
+    mem_info->block_count = 0;
 
-    while (ret > 0 && continuation != 0 && block_count < MAX_BLOCKS) {
-        mem_blocks[block_count].base = block.base;
-        mem_blocks[block_count].length = block.length;
-        mem_blocks[block_count].type = block.type;
-        mem_blocks[block_count].ACPI = block.ACPI;
+    do {
+        if (i686_E820GetNextBlock(&block, &continuation) <= 0)
+            break;
 
-        block_count++;
+        if (mem_info->block_count >= E820_MemoryInfo_MAX_BLOCKS)
+            return -1;
 
-        ret = i686_E820GetNextBlock(&block, &continuation);
-    }
+        mem_info->blocks[mem_info->block_count] = block;
+        mem_info->block_count++;
+    } while (continuation != 0);
 
-    mem_info->block_count = block_count;
-    mem_info->blocks = mem_blocks;
+    return 0;
 }
