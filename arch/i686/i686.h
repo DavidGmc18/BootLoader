@@ -51,3 +51,7 @@ static inline void i686_iowait() {
 }
 
 __attribute__((noreturn)) void i686_panic(void);
+
+static inline void i686_hlt() {
+    __asm__ volatile ("hlt" ::: "memory");
+}
