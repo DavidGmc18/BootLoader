@@ -9,17 +9,10 @@ typedef struct {
     uint32_t ACPI;
 } E820_MemoryBlock;
 
+#define E820_MemoryInfo_MAX_BLOCKS 256
 typedef struct {
-    uint32_t block_count;
-    E820_MemoryBlock* blocks;
+    uint8_t block_count;
+    E820_MemoryBlock blocks[E820_MemoryInfo_MAX_BLOCKS];
 } E820_MemoryInfo;
 
-// enum E820_MemoryType {
-//     E820_USABLE = 1,
-//     E820_RESERVED = 2,
-//     E820_ACPI_RECLAIMABLE = 3,
-//     E820_ACPI_NVS = 4,
-//     E820_BAD_MEMORY = 5,
-// };
-
-void E820_detect(E820_MemoryInfo* mem_info);
+int E820_detect(E820_MemoryInfo* mem_info);

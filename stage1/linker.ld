@@ -3,9 +3,10 @@ OUTPUT_FORMAT("binary")
 phys = 0x0500;
 
 MEMORY {
-    RAM (rwx) :     ORIGIN = 0x0500, LENGTH = 0x7500
-    STACK (rw) :    ORIGIN = 0x8000, LENGTH = 0x2000
-    AHCI (rw) :     ORIGIN = 0x10000, LENGTH = 0x4800
+    RAM (rwx) :     ORIGIN = 0x00500, LENGTH = 0x07500
+    STACK (rw) :    ORIGIN = 0x08000, LENGTH = 0x02000
+    AHCI (rw) :     ORIGIN = 0x10000, LENGTH = 0x04800
+    BOOT_INFO (rw): ORIGIN = 0x14800, LENGTH = 0x0180Cm
 }
 
 SECTIONS {
@@ -42,6 +43,12 @@ SECTIONS {
         __ahci_end = .;
     } > AHCI
     ASSERT(__ahci_end <= ORIGIN(AHCI) + LENGTH(AHCI), "ERROR: .ahci_mem overflows AHCI memory region!")
+
+    .boot_info : {
+        __boot_info_start = .;
+        *(.boot_info)
+        __boot_info_end = .;
+    } > BOOT_INFO
     
     __end = .;
 
