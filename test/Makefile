@@ -15,8 +15,8 @@ all: test
 
 test: $(BUILD_DIR)/test.bin
 
-$(BUILD_DIR)/test.bin: $(OBJECTS_ASM) $(OBJECTS_C) $(VGA_DRIVER) $(ATA_DRIVER) $(ARCH_i686_LIB) $(UTIL_LIB)
-	@i686-elf-gcc $(TARGET_LINKFLAGS) -Wl,-Map=$(BUILD_DIR)/test.map -o $@ $^ $(TARGET_LIBS) $(VGA_DRIVER) $(ATA_DRIVER) $(ARCH_i686_LIB) $(UTIL_LIB)
+$(BUILD_DIR)/test.bin: $(OBJECTS_ASM) $(OBJECTS_C)
+	@i686-elf-gcc $(TARGET_LINKFLAGS) -Wl,-Map=$(BUILD_DIR)/test.map -o $@ $^ $(TARGET_LIBS)
 	@echo "--> Created:  test.bin"
 
 $(BUILD_DIR)/test/c/%.o: %.c $(HEADERS_C)

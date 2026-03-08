@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <driver/ahci/ahci.h>
 #include <stdbool.h>
+#include <include/types.h>
 
 typedef union {
     uint32_t raw[4];
@@ -23,11 +24,3 @@ typedef struct {
 int MBR_get_table(MBR_Table* table, void* abar, uint8_t port);
 
 bool MBR_is_bootable(MBR_Entry entry);
-
-typedef struct {
-    uint8_t port;
-    uint8_t partition;
-    uint32_t base;
-    uint32_t sectors;
-    char drive_name[41];
-} MBR_Bootable_Partition;
