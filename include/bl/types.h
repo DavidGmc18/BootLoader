@@ -9,29 +9,29 @@ typedef union {
         uint16_t high;
     }__attribute__((packed));
     uint8_t raw[6];
-} __attribute__((packed)) LBA48;
+} __attribute__((packed)) BL_LBA48;
 
 typedef struct {
     uint64_t base;
     uint64_t length;
     uint32_t type;
     uint32_t ACPI;
-} MemoryBlock;
+} BL_MemoryBlock;
 
 typedef struct {
     uint8_t block_count;
-    MemoryBlock blocks[256];
-} MemoryInfo;
+    BL_MemoryBlock blocks[256];
+} BL_MemoryInfo;
 
 typedef struct {
     uint8_t id;
     uint32_t lba;
     uint32_t sectors;
-} Parition;
+} BL_Parition;
 
 typedef struct {
     void* abar;
     uint8_t port;
-    Parition partition;
+    BL_Parition partition;
     char drive_name[41];
-} Disk;
+} BL_Disk;

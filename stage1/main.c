@@ -6,15 +6,15 @@
 #include <driver/ahci/ahci.h>
 #include "mbr.h"
 #include <arch/i686/i686.h>
-#include <include/boot.h>
+#include <bl/boot.h>
 
-typedef void (*Start)(BootInfo*, BootServices*);
+typedef void (*Start)(BL_BootInfo*, BL_BootServices*);
 
-BootInfo boot_info __attribute__((section(".boot_info")));
-BootServices boot_services __attribute__((section(".boot_info")));
+BL_BootInfo boot_info __attribute__((section(".boot_info")));
+BL_BootServices boot_services __attribute__((section(".boot_info")));
 
 #define MAX_BOOTABLE_DISKS 20
-Disk bootable_disk[MAX_BOOTABLE_DISKS];
+BL_Disk bootable_disk[MAX_BOOTABLE_DISKS];
 uint8_t bootable_disk_count = 0;
 
 void __attribute__((cdecl)) start() {
@@ -95,6 +95,9 @@ void __attribute__((cdecl)) start() {
         VGA_putcolor(x, 1, 0x70);
     }
 
+    // TODO hints
+    // TODO reboot option
+
     int running = 1;
     while (running) {
         uint8_t status = i686_inb(0x64);
@@ -143,7 +146,7 @@ void __attribute__((cdecl)) start() {
 
     void* location = (void*)0x100000;
 
-    if (AHCI_read(abar, bootable_disk[CURSOR].port, (LBA48){.low=bootable_disk[CURSOR].partition.lba}, 32, location)) {
+    if (AHCI_read(abar, bootable_disk[CURSOR].port, (BL_LBA48){bootable_disk[CURSOR].partition.lba}, 32, location)) {
         printk("BOOT failed!\n");
         goto end;
     }
