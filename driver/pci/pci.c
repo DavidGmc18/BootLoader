@@ -1,5 +1,5 @@
 #include "pci.h"
-#include <arch/i686/io.h>
+#include <arch/i686/i686.h>
 #include <util/printk.h>
 #include <stdbool.h>
 
