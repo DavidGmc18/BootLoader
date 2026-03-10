@@ -12,12 +12,6 @@ export TARGET_CFLAGS = -std=c99 -g -Os -DDEBUG -ffreestanding -nostdlib -I. -I$(
 export TARGET_LINKFLAGS =
 export TARGET_LIBS = -lgcc
 
-BINUTILS_VERSION = 2.45.1
-BINUTILS_URL = https://ftp.gnu.org/gnu/binutils/binutils-$(BINUTILS_VERSION).tar.xz
-
-GCC_VERSION = 15.2.0
-GCC_URL = https://ftp.gnu.org/gnu/gcc/gcc-$(GCC_VERSION)/gcc-$(GCC_VERSION).tar.xz
-
 export ARCH_i686_LIB = $(BUILD_DIR)/arch/i686.a
 export UTIL_LIB = $(BUILD_DIR)/util.a
 

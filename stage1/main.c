@@ -90,13 +90,19 @@ void __attribute__((cdecl)) start() {
         goto end;
     }
 
+    VGA_setcursor(0, 22);
+    printk("ARROW UP/DOWN - go up/down\n");
+    printk("ENTER - select partiton and boot\n");
+    printk("HIGHLIGHTED - current selection");
+    for (int x = 0; x < 11; x ++) {
+        VGA_putcolor(x, 24, 0x70);
+    }
+
     uint8_t CURSOR = 0;
     for (int x = 2; x < 78; x ++) {
         VGA_putcolor(x, 1, 0x70);
     }
-
-    // TODO hints
-    // TODO reboot option
+    VGA_setcursor(25, 80);
 
     int running = 1;
     while (running) {
