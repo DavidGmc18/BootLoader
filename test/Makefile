@@ -1,5 +1,3 @@
-TARGET_LINKFLAGS += -T linker.ld -nostdlib
-
 HEADERS_C = 	$(shell find . -type f -name "*.h")
 SOURCES_C = 	$(shell find . -type f -name "*.c")
 
@@ -16,7 +14,7 @@ all: test
 test: $(BUILD_DIR)/test.bin
 
 $(BUILD_DIR)/test.bin: $(OBJECTS_ASM) $(OBJECTS_C)
-	@i686-elf-gcc $(TARGET_LINKFLAGS) -Wl,-Map=$(BUILD_DIR)/test.map -o $@ $^ $(TARGET_LIBS)
+	@i686-elf-gcc -T linker.ld -nostdlib -Wl,-Map=$(BUILD_DIR)/test.map -o $@ $^ -lgcc
 	@echo "--> Created:  test.bin"
 
 $(BUILD_DIR)/test/c/%.o: %.c $(HEADERS_C)

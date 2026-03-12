@@ -1,5 +1,3 @@
-TARGET_LINKFLAGS += -T linker.ld -nostdlib
-
 HEADERS_C = 	$(shell find . -type f -name "*.h")
 SOURCES_C = 	$(shell find . -type f -name "*.c")
 
@@ -17,7 +15,7 @@ stage1: $(BUILD_DIR)/stage1.bin
 
 $(STAGE1_BIN): $(OBJECTS_ASM) $(OBJECTS_C) $(AHCI_DRIVER) $(PCI_DRIVER) $(VGA_DRIVER) $(ARCH_i686_LIB) $(UTIL_LIB)
 	@mkdir -p $(@D)
-	@i686-elf-gcc $(TARGET_LINKFLAGS) -Wl,-Map=$(BUILD_DIR)/stage1.map -o $@ $^ $(TARGET_LIBS)
+	@i686-elf-gcc -T linker.ld -nostdlib -Wl,-Map=$(BUILD_DIR)/stage1.map -o $@ $^ -lgcc
 	@echo "--> Created  stage1.bin"
 
 $(BUILD_DIR)/stage1/c/%.o: %.c $(HEADERS_C)

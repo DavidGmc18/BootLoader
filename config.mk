@@ -1,9 +1,6 @@
 export SOURCE_DIR = $(abspath .)
 export BUILD_DIR = $(abspath build)
 
-#
-# Config
-#
 BUILD_ON_RAM = 1
 BUILD_ON_RAM_SIZE = 32M
 
@@ -15,18 +12,8 @@ TEST_IMAGE = $(BUILD_DIR)/test.dd
 export STAGE0_BIN = $(BUILD_DIR)/stage0.bin
 export STAGE1_BIN = $(BUILD_DIR)/stage1.bin
 
-# ####################################################
-
-export CFLAGS = -std=c99 -g
-export ASMFLAGS =
-export LINKFLAGS =
-export LIBS =
-
-export TARGET = $(SOURCE_DIR)/toolchain/i686-elf/bin/i686-elf
 export TARGET_ASMFLAGS = -f elf
 export TARGET_CFLAGS = -std=c99 -g -Os -DDEBUG -ffreestanding -nostdlib -I. -I$(SOURCE_DIR) -I$(SOURCE_DIR)/include
-export TARGET_LINKFLAGS =
-export TARGET_LIBS = -lgcc
 
 export ARCH_i686_LIB = $(BUILD_DIR)/arch/i686.a
 export UTIL_LIB = $(BUILD_DIR)/util.a
