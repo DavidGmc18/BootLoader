@@ -35,3 +35,6 @@ typedef struct {
     BL_Parition partition;
     char drive_name[41];
 } BL_Disk;
+
+typedef void (*BL_PrintK)(const char* fmt, ...);
+typedef int (*BL_DiskRead)(void* abar, uint8_t port, BL_LBA48 lba, uint32_t count, uint16_t* buffer);

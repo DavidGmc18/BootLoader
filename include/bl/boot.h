@@ -8,6 +8,6 @@ typedef struct {
 } BL_BootInfo;
 
 typedef struct {
-    void (*printk)(const char* fmt, ...);
-    int (*disk_read)(void* abar, uint8_t port, BL_LBA48 lba, uint32_t count, uint16_t* buffer);
+    BL_PrintK printk;
+    BL_DiskRead disk_read;
 } BL_BootServices;
