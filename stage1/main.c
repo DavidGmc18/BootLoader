@@ -8,6 +8,8 @@
 #include <arch/i686/i686.h>
 #include <bl/boot.h>
 
+extern uint8_t __os_start;
+
 typedef void (*Start)(BL_BootInfo*, BL_BootServices*);
 
 BL_BootInfo boot_info __attribute__((section(".boot_info")));
@@ -150,7 +152,7 @@ void __attribute__((cdecl)) start() {
 
     VGA_clrscr();
 
-    void* location = (void*)0x100000;
+    void* location = &__os_start;
 
     if (AHCI_read(abar, bootable_disk[CURSOR].port, (BL_LBA48){bootable_disk[CURSOR].partition.lba}, 32, location)) {
         printk("BOOT failed!\n");

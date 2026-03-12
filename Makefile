@@ -1,35 +1,46 @@
 include config.mk
 
-# TODO add size asserts
-
 .PHONY: all bootloader_bin test stage0 stage1 deps build_dir clean
 
 all: bootloader_bin test
 
 bootloader_bin: $(BOOTLOADER_BIN)
 
-$(BOOTLOADER_BIN): deps stage0 stage1
+$(BOOTLOADER_BIN): stage0 stage1
 	@dd if=/dev/zero of=$@ bs=1 count=16384 >/dev/null
-	@dd if=$(BUILD_DIR)/stage0.bin of=$@ conv=notrunc >/dev/null
-	@dd if=$(BUILD_DIR)/stage1.bin of=$@ bs=512 seek=1 conv=notrunc >/dev/null
+	@dd if=$(STAGE0_BIN) of=$@ conv=notrunc >/dev/null
+	@dd if=$(STAGE1_BIN) of=$@ bs=512 seek=1 conv=notrunc >/dev/null
 	@echo "--> Done: $@"
+
+#
+# Stage 0
+#
+stage0: $(STAGE0_BIN)
+
+$(STAGE0_BIN): build_dir
+	@$(MAKE) -C $(SOURCE_DIR)/stage0 BUILD_DIR=$(BUILD_DIR)
+
+#
+# Stage 1
+#
+stage1: $(STAGE1_BIN)
+
+$(STAGE1_BIN): build_dir deps
+	@$(MAKE) -C $(SOURCE_DIR)/stage1 BUILD_DIR=$(BUILD_DIR)
+	@if [ $$(wc -c < $(STAGE1_BIN)) -gt $$(( 31 * 512 )) ]; then \
+        echo "ERROR: $(STAGE1_BIN) too large! Max 31 sectors ($$(( 31 * 512 )) bytes), got $$(wc -c < $(STAGE1_BIN)) bytes"; \
+        exit 1; \
+    fi
+
 
 deps:
 	@$(MAKE) -C $(SOURCE_DIR)/arch BUILD_DIR=$(BUILD_DIR)
 	@$(MAKE) -C $(SOURCE_DIR)/util BUILD_DIR=$(BUILD_DIR)
 	@$(MAKE) -C $(SOURCE_DIR)/driver BUILD_DIR=$(BUILD_DIR)
 
-stage0: $(STAGE0_BIN)
-
-$(STAGE0_BIN): build_dir
-	@$(MAKE) -C $(SOURCE_DIR)/stage0 BUILD_DIR=$(BUILD_DIR)
-
-
-stage1: $(STAGE1_BIN)
-
-$(STAGE1_BIN): build_dir
-	@$(MAKE) -C $(SOURCE_DIR)/stage1 BUILD_DIR=$(BUILD_DIR)
-
+#
+# Test
+#
 test: $(TEST_IMAGE)
 
 $(TEST_IMAGE): bootloader_bin build_dir
@@ -49,7 +60,7 @@ run:
 	-debugcon stdio \
 	-machine q35,smbus=off \
 	-cpu pentium3 \
-	-m 128M \
+	-m 2M \
 	-nodefaults \
 	-device ich9-ahci,id=ahci \
 	-drive file=$(TEST_IMAGE),id=disk0,format=raw,if=none \

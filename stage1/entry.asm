@@ -3,7 +3,7 @@ bits 16
 section .entry
 
 extern __bss_start
-extern __end
+extern __bss_end
 
 extern start
 global entry
@@ -42,7 +42,7 @@ enable_pmode:
 
     ; clear bss (uninitialized data)
     mov edi, __bss_start
-    mov ecx, __end
+    mov ecx, __bss_end
     sub ecx, edi
     mov al, 0
     cld
