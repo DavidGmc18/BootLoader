@@ -9,6 +9,7 @@
 #include <bl/boot.h>
 
 extern uint8_t __os_start;
+extern uint8_t __os_size;
 
 typedef void (*Start)(BL_BootInfo*, BL_BootServices*);
 
@@ -152,9 +153,30 @@ void __attribute__((cdecl)) start() {
 
     VGA_clrscr();
 
+    BL_BootSector boot_sector;
+    if (AHCI_read(bootable_disk[CURSOR].abar, bootable_disk[CURSOR].port, (BL_LBA48){bootable_disk[CURSOR].partition.lba}, 1, (uint16_t*)&boot_sector)) {
+        printk("BOOT failed!\n");
+        goto end;
+    }
+
+    if (boot_sector.boot_signature != 0xAA55 || boot_sector.vbr.signature != BL_VBR_SIGNATURE) {
+        printk("BOOT failed: invalid VBR!\n");
+        goto end;
+    }
+
+    BL_LBA48 lba = {
+        .low = bootable_disk[CURSOR].partition.lba + boot_sector.vbr.boot_lba
+    };
+
+    uint32_t sectors = boot_sector.vbr.boot_sectors;
+    if (sectors * 512 > ((uint32_t)&__os_size)) {
+        printk("BOOT failed: OS too large!\n");
+        goto end;
+    }
+
     void* location = &__os_start;
 
-    if (AHCI_read(abar, bootable_disk[CURSOR].port, (BL_LBA48){bootable_disk[CURSOR].partition.lba}, 32, location)) {
+    if (AHCI_read(bootable_disk[CURSOR].abar, bootable_disk[CURSOR].port, lba, sectors, (uint16_t*)location)) {
         printk("BOOT failed!\n");
         goto end;
     }
@@ -165,11 +187,28 @@ void __attribute__((cdecl)) start() {
     boot_services.printk = printk;
     boot_services.disk_read = AHCI_read;
 
-    VGA_clrscr();
-    Start start = (Start)location;
+    Start start = (Start)((uint8_t*)location + boot_sector.vbr.entry_offset);
     start(&boot_info, &boot_services);
 
+
+
+
+    // void* location = &__os_start;
+
+    // if (AHCI_read(bootable_disk[CURSOR].abar, bootable_disk[CURSOR].port, (BL_LBA48){0}, 64, (uint16_t*)location)) {
+    //     printk("BOOT failed!\n");
+    //     goto end;
+    // }
+
+    // boot_info.disk = bootable_disk[CURSOR];
+    // E820_detect(&boot_info.memory_info);
+
+    // boot_services.printk = printk;
+    // boot_services.disk_read = AHCI_read;
+
+    // Start start = (Start)((uint8_t*)location + 512*33);
+    // start(&boot_info, &boot_services);
+
 end:
-    while (1)
-        i686_hlt();
+    while (1) i686_hlt();
 }

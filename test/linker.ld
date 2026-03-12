@@ -2,15 +2,35 @@ ENTRY(start)
 OUTPUT_FORMAT("binary")
 phys = 0x00020000;
 
-SECTIONS
-{
-    . = phys;
+SECTIONS {
+    . = 0;
+    .boot_sector : {
+        KEEP(*(.boot_sector))
+    }
 
-    .entry              : { __entry_start = .;      *(.entry)   }
-    .text               : { __text_start = .;       *(.text)    }
-    .data               : { __data_start = .;       *(.data)    }
-    .rodata             : { __rodata_start = .;     *(.rodata)  }
-    .bss                : { __bss_start = .;        *(.bss)     }
+    . = phys;
+    .entry phys : AT(SIZEOF(.boot_sector)) {
+        __entry_start = .;
+        *(.entry)
+    }
+
+    .text : AT(SIZEOF(.boot_sector) + SIZEOF(.entry)) {
+        __text_start = .;
+        *(.text*)
+    }
+
+    .data : {
+        *(.data)
+    }
+
+    .rodata : {
+        *(.rodata)
+    }
+
+    .bss : {
+        __bss_start = .;
+        *(.bss)
+    }
     
     __end = .;
 }

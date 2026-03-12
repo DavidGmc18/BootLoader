@@ -38,3 +38,13 @@ typedef struct {
 
 typedef void (*BL_PrintK)(const char* fmt, ...);
 typedef int (*BL_DiskRead)(void* abar, uint8_t port, BL_LBA48 lba, uint32_t count, uint16_t* buffer);
+
+#define BL_VBR_SIGNATURE 0x4E424F53
+
+typedef struct {
+    uint32_t signature;
+    uint32_t boot_lba;
+    uint16_t boot_sectors;
+    uint32_t entry_offset;
+    char name[50];
+} __attribute__((packed)) BL_VBR;

@@ -38,6 +38,5 @@ void __attribute__((section(".entry"))) start(BL_BootInfo* boot_info, BL_BootSer
     boot_services->disk_read(boot_info->disk.abar, boot_info->disk.port, (BL_LBA48){0}, 1, buffer);
     boot_services->printk("Test disk read => 0x%x\n", buffer[255]);
     
-    while (1)
-        __asm__ volatile ("hlt" ::: "memory");
+    while (1) __asm__ volatile ("hlt" ::: "memory");
 }

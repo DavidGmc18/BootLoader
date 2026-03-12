@@ -7,7 +7,7 @@ MEMORY {
     STACK (rw) :    ORIGIN = 0x08000, LENGTH = 0x02000
     AHCI (rw) :     ORIGIN = 0x10000, LENGTH = 0x04800
     BOOT_INFO (rw): ORIGIN = 0x14800, LENGTH = 0x02800
-    OS (w):         ORIGIN = 0x20000, LENGTH = 0x60000
+    OS (rwx):       ORIGIN = 0x20000, LENGTH = 0x60000
 }
 
 SECTIONS {
@@ -58,4 +58,5 @@ SECTIONS {
     } > OS
 
     __stack_top = ORIGIN(STACK) + LENGTH(STACK);
+    __os_size = LENGTH(OS);
 }
