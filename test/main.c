@@ -16,6 +16,10 @@ void* memset(void* ptr, int value, uint16_t num) {
 void __attribute__((section(".entry"))) start(BL_BootInfo* boot_info, BL_BootServices* boot_services) {
     memset(&__bss_start, 0, (&__end) - (&__bss_start));
 
+    uint32_t esp;
+    __asm__ volatile("mov %%esp, %0" : "=r"(esp));
+    boot_services->printk("ESP=0x%x\n", esp);
+
     boot_services->printk("TEST!!!\n");
 
     boot_services->printk("boot_info = {\n");

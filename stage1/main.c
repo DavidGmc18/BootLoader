@@ -11,14 +11,14 @@
 extern uint8_t __os_start;
 extern uint8_t __os_size;
 
-typedef void (*Start)(BL_BootInfo*, BL_BootServices*);
+#define MAX_BOOTABLE_DISKS 20
+BL_Disk bootable_disk[MAX_BOOTABLE_DISKS];
+uint8_t bootable_disk_count = 0;
 
 BL_BootInfo boot_info __attribute__((section(".boot_info")));
 BL_BootServices boot_services __attribute__((section(".boot_info")));
 
-#define MAX_BOOTABLE_DISKS 20
-BL_Disk bootable_disk[MAX_BOOTABLE_DISKS];
-uint8_t bootable_disk_count = 0;
+typedef void (*BL_Entry)(BL_BootInfo* boot_info, BL_BootServices* boot_services);
 
 void __attribute__((cdecl)) start() {
     VGA_Initialize(80, 25, (uint8_t*)0xB8000);
@@ -155,12 +155,12 @@ void __attribute__((cdecl)) start() {
 
     BL_BootSector boot_sector;
     if (AHCI_read(bootable_disk[CURSOR].abar, bootable_disk[CURSOR].port, (BL_LBA48){bootable_disk[CURSOR].partition.lba}, 1, (uint16_t*)&boot_sector)) {
-        printk("BOOT failed!\n");
+        printk("BOOT failed: failed to read disk!\n");
         goto end;
     }
 
     if (boot_sector.boot_signature != 0xAA55 || boot_sector.vbr.signature != BL_VBR_SIGNATURE) {
-        printk("BOOT failed: invalid VBR!\n");
+        printk("BOOT failed: invalid boot secotor!\n");
         goto end;
     }
 
@@ -170,14 +170,14 @@ void __attribute__((cdecl)) start() {
 
     uint32_t sectors = boot_sector.vbr.boot_sectors;
     if (sectors * 512 > ((uint32_t)&__os_size)) {
-        printk("BOOT failed: OS too large!\n");
+        printk("BOOT failed: requested too many sectors!\n");
         goto end;
     }
 
     void* location = &__os_start;
 
     if (AHCI_read(bootable_disk[CURSOR].abar, bootable_disk[CURSOR].port, lba, sectors, (uint16_t*)location)) {
-        printk("BOOT failed!\n");
+        printk("BOOT failed: failed to read disk!\n");
         goto end;
     }
 
@@ -187,27 +187,8 @@ void __attribute__((cdecl)) start() {
     boot_services.printk = printk;
     boot_services.disk_read = AHCI_read;
 
-    Start start = (Start)((uint8_t*)location + boot_sector.vbr.entry_offset);
-    start(&boot_info, &boot_services);
-
-
-
-
-    // void* location = &__os_start;
-
-    // if (AHCI_read(bootable_disk[CURSOR].abar, bootable_disk[CURSOR].port, (BL_LBA48){0}, 64, (uint16_t*)location)) {
-    //     printk("BOOT failed!\n");
-    //     goto end;
-    // }
-
-    // boot_info.disk = bootable_disk[CURSOR];
-    // E820_detect(&boot_info.memory_info);
-
-    // boot_services.printk = printk;
-    // boot_services.disk_read = AHCI_read;
-
-    // Start start = (Start)((uint8_t*)location + 512*33);
-    // start(&boot_info, &boot_services);
+    BL_Entry entry = (BL_Entry)((uint8_t*)location + boot_sector.vbr.entry_offset);
+    entry(&boot_info, &boot_services);
 
 end:
     while (1) i686_hlt();
