@@ -22,4 +22,4 @@ typedef struct {
 
 int MBR_get_table(MBR_Table* table, void* abar, uint8_t port);
 
-bool MBR_is_bootable(MBR_Entry entry);
+bool MBR_is_bootable(MBR_Entry entry, void* abar, uint8_t port);

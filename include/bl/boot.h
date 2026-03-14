@@ -12,6 +12,8 @@ typedef struct {
     BL_DiskRead disk_read;
 } BL_BootServices;
 
+#define BL_BOOT_SIGNATURE 0xAA55
+
 typedef struct {
     uint8_t undefined[446];
     BL_VBR vbr;

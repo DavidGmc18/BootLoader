@@ -1,4 +1,5 @@
 #include "mbr.h"
+#include <bl/boot.h>
 
 #define MBR_START_WORD 223
 #define MBR_ENTRY_WORDS 8
@@ -22,11 +23,19 @@ int MBR_get_table(MBR_Table* table, void* abar, uint8_t port) {
     return 0;
 }
 
-bool MBR_is_bootable(MBR_Entry entry) {
+bool MBR_is_bootable(MBR_Entry entry, void* abar, uint8_t port) {
     if (!(entry.attributes & 0x80))
         return false;
 
     if (entry.attributes == 0xFF)
+        return false;
+
+    uint16_t buffer[256];
+    if (AHCI_read(abar, port, (BL_LBA48){entry.lba}, 1, buffer))
+        return false;
+
+    BL_BootSector* boot_sector = (BL_BootSector*)buffer;
+    if (boot_sector->boot_signature != BL_BOOT_SIGNATURE || boot_sector->vbr.signature != BL_VBR_SIGNATURE)
         return false;
 
     return true;
