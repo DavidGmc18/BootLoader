@@ -10,15 +10,20 @@
 
 extern uint8_t __os_start;
 extern uint8_t __os_size;
+extern uint8_t __stack_top;
 
 #define MAX_BOOTABLE_DISKS 20
-BL_Disk bootable_disk[MAX_BOOTABLE_DISKS];
-uint8_t bootable_disk_count = 0;
+static BL_Disk bootable_disk[MAX_BOOTABLE_DISKS];
+static uint8_t bootable_disk_count = 0;
 
-BL_BootInfo boot_info __attribute__((section(".boot_info")));
-BL_BootServices boot_services __attribute__((section(".boot_info")));
+static uint16_t buffer[256];
+static AHCI_dev_map dev_map;
+static MBR_Table mbr_table;
 
-typedef void (*BL_Entry)(BL_BootInfo* boot_info, BL_BootServices* boot_services);
+static BL_BootInfo boot_info __attribute__((section(".boot_info")));
+static BL_BootServices boot_services __attribute__((section(".boot_info")));
+
+typedef void __attribute__((cdecl)) (*Entry)(BL_BootInfo* boot_info, BL_BootServices* boot_services);
 
 void __attribute__((cdecl)) start() {
     VGA_Initialize(80, 25, (uint8_t*)0xB8000);
@@ -27,15 +32,12 @@ void __attribute__((cdecl)) start() {
     pci_address_t sata_address = PCI_find_SATA();
     void* abar = AHCI_get_abar(sata_address);
 
-    AHCI_dev_map dev_map;
     AHCI_init(abar, &dev_map);
 
-    uint16_t buffer[256];
     for (uint8_t port = 0; port < 32; port++) {
         if (dev_map.dev[port] != AHCI_DEV_SATA)
             continue;
 
-        MBR_Table mbr_table;
         if (MBR_get_table(&mbr_table, abar, port))
             continue;
 
@@ -44,7 +46,7 @@ void __attribute__((cdecl)) start() {
 
         for (uint8_t partition_id = 0; partition_id < 4; partition_id++) {
 
-            if (!MBR_is_bootable(mbr_table.entries[partition_id]))
+            if (!MBR_is_bootable(mbr_table.entries[partition_id], abar, port))
                 continue;
 
             bootable_disk[bootable_disk_count].abar = abar;
@@ -152,23 +154,18 @@ void __attribute__((cdecl)) start() {
     }
 
     VGA_clrscr();
-
-    BL_BootSector boot_sector;
-    if (AHCI_read(bootable_disk[CURSOR].abar, bootable_disk[CURSOR].port, (BL_LBA48){bootable_disk[CURSOR].partition.lba}, 1, (uint16_t*)&boot_sector)) {
+    
+    if (AHCI_read(bootable_disk[CURSOR].abar, bootable_disk[CURSOR].port, (BL_LBA48){bootable_disk[CURSOR].partition.lba}, 1, buffer)) {
         printk("BOOT failed: failed to read disk!\n");
         goto end;
     }
-
-    if (boot_sector.boot_signature != 0xAA55 || boot_sector.vbr.signature != BL_VBR_SIGNATURE) {
-        printk("BOOT failed: invalid boot secotor!\n");
-        goto end;
-    }
+    BL_BootSector* boot_sector = (BL_BootSector*)buffer;
 
     BL_LBA48 lba = {
-        .low = bootable_disk[CURSOR].partition.lba + boot_sector.vbr.boot_lba
+        .low = bootable_disk[CURSOR].partition.lba + boot_sector->vbr.boot_lba
     };
 
-    uint32_t sectors = boot_sector.vbr.boot_sectors;
+    uint32_t sectors = boot_sector->vbr.boot_sectors;
     if (sectors * 512 > ((uint32_t)&__os_size)) {
         printk("BOOT failed: requested too many sectors!\n");
         goto end;
@@ -187,7 +184,7 @@ void __attribute__((cdecl)) start() {
     boot_services.printk = printk;
     boot_services.disk_read = AHCI_read;
 
-    BL_Entry entry = (BL_Entry)((uint8_t*)location + boot_sector.vbr.entry_offset);
+    Entry entry = (Entry)(location + boot_sector->vbr.entry_offset);
     entry(&boot_info, &boot_services);
 
 end:

@@ -20,7 +20,7 @@ $(STAGE1_BIN): $(OBJECTS_ASM) $(OBJECTS_C) $(AHCI_DRIVER) $(PCI_DRIVER) $(VGA_DR
 
 $(BUILD_DIR)/stage1/c/%.o: %.c $(HEADERS_C)
 	@mkdir -p $(@D)
-	@i686-elf-gcc $(TARGET_CFLAGS) -c -o $@ $<
+	@i686-elf-gcc $(TARGET_CFLAGS) -mpreferred-stack-boundary=2 -c -o $@ $<
 	@echo "--> Compiled: " $<
 
 $(BUILD_DIR)/stage1/asm/%.o: %.asm $(HEADERS_ASM)
