@@ -15,3 +15,16 @@ void* memset (void* ptr, int value, size_t num) {
 
     return ptr;
 }
+
+int memcmp(const void* s1, const void* s2, size_t n) {
+    uint8_t* u8s1 = (uint8_t*)s1;
+    uint8_t* u8s2 = (uint8_t*)s2;
+
+    for (size_t i = 0; i < n; i++) {
+        int ret;
+        if (ret = u8s1[i] - u8s2[i])
+            return ret;
+    }
+
+    return 0;
+}
