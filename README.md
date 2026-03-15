@@ -39,7 +39,7 @@ The first sector of your partition must contain a valid VBR. The full sector str
 | `entry_offset` | `uint32_t` | Byte offset from load address to entry point |
 | `name`         | `char[50]` | Name (currently unused)                      |
 
-## Boot Services
+## Entry
 
 Your entry point is called with the following signature:
 ```c
