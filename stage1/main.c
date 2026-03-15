@@ -7,6 +7,7 @@
 #include "mbr.h"
 #include <arch/i686/i686.h>
 #include <bl/boot.h>
+#include "acpi_poweroff.h"
 
 extern uint8_t __os_start;
 extern uint8_t __os_size;
@@ -188,5 +189,6 @@ void __attribute__((cdecl)) start() {
     entry(&boot_info, &boot_services);
 
 end:
-    while (1) i686_hlt();
+    acpi_power_off();
+    __builtin_unreachable();
 }

@@ -1,5 +1,6 @@
 #include <bl/boot.h>
 #include <stdint.h>
+#include <arch/i686/i686.h>
 
 extern uint8_t __bss_start;
 extern uint8_t __end;
@@ -15,6 +16,10 @@ void* memset(void* ptr, int value, uint16_t num) {
 
 void __attribute__((cdecl, section(".entry"))) entry(BL_BootInfo* boot_info, BL_BootServices* boot_services) {
     memset(&__bss_start, 0, (&__end) - (&__bss_start));
+
+    // uint32_t esp;
+    // __asm__ volatile("mov %%esp, %0" : "=r"(esp));
+    // boot_services->printk("ESP=0x%x\n", esp);
 
     boot_services->printk("TEST!!!\n");
 
@@ -37,10 +42,15 @@ void __attribute__((cdecl, section(".entry"))) entry(BL_BootInfo* boot_info, BL_
     uint16_t buffer[256];
     boot_services->disk_read(boot_info->disk.abar, boot_info->disk.port, (BL_LBA48){0}, 1, buffer);
     boot_services->printk("Test disk read => 0x%x\n", buffer[255]);
-    
-    while (1) __asm__ volatile ("hlt" ::: "memory");
 
-    // uint32_t esp;
-    // __asm__ volatile("mov %%esp, %0" : "=r"(esp));
-    // boot_services->printk("ESP=0x%x\n", esp);
+    boot_services->printk("Press ESC to power-off\n");
+    int running = 1;
+    while (running) {
+        uint8_t status = i686_inb(0x64);
+        if (status & 0x01) {
+            uint8_t key_code = i686_inb(0x60);
+            if (key_code == 0x01) return;
+        }
+        i686_iowait();
+    }
 }
