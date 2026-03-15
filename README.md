@@ -25,7 +25,7 @@ Bootloader memory can be freely reused once you no longer need any variables or 
 
 Your boot code is loaded at `0x20000` according to the VBR parameters and handed off in 32-bit protected mode. The 384KiB range (`0x20000`–`0x80000`) is the hard limit enforced by the bootloader, but your program can freely use any available memory beyond that — keep the [x86 memory map](https://wiki.osdev.org/Memory_Map_(x86)) in mind.
 
-When your entry point returns, the bootloader will attempt an ACPI power-off. If ACPI power-off fails the screen will clear and display a manual power-off prompt.
+The entry point is not expected to return. If it does, the system will halt.
 
 ## Volume Boot Record (VBR)
 

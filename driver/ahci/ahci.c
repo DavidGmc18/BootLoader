@@ -244,11 +244,8 @@ int AHCI_identify(void* abar, uint8_t port_no, uint16_t* buffer) {
     FIS_REG_H2D* cmdfis = (FIS_REG_H2D*)(&cmdtbl->cfis);
 	FIS_set_reg_h2d_identify(cmdfis);
 
-    if (wait_port_idle(port))
-        return -1;
-
+    if (wait_port_idle(port)) return -1;
 	issue_command(port, slot);
-
     return wait_command_finish(port, slot);
 }
 
@@ -286,10 +283,7 @@ int AHCI_read(void* abar, uint8_t port_no, BL_LBA48 lba, uint32_t count, uint16_
     FIS_REG_H2D* cmdfis = (FIS_REG_H2D*)(&cmdtbl->cfis);
 	FIS_set_reg_h2d_read(cmdfis, lba, count);
 
-    if (wait_port_idle(port))
-        return -1;
-
+    if (wait_port_idle(port)) return -1;
 	issue_command(port, slot);
-
     return wait_command_finish(port, slot);
 }

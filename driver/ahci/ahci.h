@@ -19,6 +19,6 @@ typedef struct {
 
 void AHCI_init(void* abar, AHCI_dev_map* dev_map);
 
-int AHCI_identify(void* abar, uint8_t port, uint16_t* buffer);
+int AHCI_identify(void* abar, uint8_t port_no, uint16_t* buffer);
 
-int AHCI_read(void* abar, uint8_t port, BL_LBA48 lba, uint32_t count, uint16_t* buffer);
+int AHCI_read(void* abar, uint8_t port_no, BL_LBA48 lba, uint32_t count, uint16_t* buffer);

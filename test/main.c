@@ -1,6 +1,5 @@
 #include <bl/boot.h>
 #include <stdint.h>
-#include <arch/i686/i686.h>
 
 extern uint8_t __bss_start;
 extern uint8_t __end;
@@ -43,14 +42,5 @@ void __attribute__((cdecl, section(".entry"))) entry(BL_BootInfo* boot_info, BL_
     boot_services->disk_read(boot_info->disk.abar, boot_info->disk.port, (BL_LBA48){0}, 1, buffer);
     boot_services->printk("Test disk read => 0x%x\n", buffer[255]);
 
-    boot_services->printk("Press ESC to power-off\n");
-    int running = 1;
-    while (running) {
-        uint8_t status = i686_inb(0x64);
-        if (status & 0x01) {
-            uint8_t key_code = i686_inb(0x60);
-            if (key_code == 0x01) return;
-        }
-        i686_iowait();
-    }
+    while (1) __asm__ volatile ("hlt" ::: "memory");
 }
