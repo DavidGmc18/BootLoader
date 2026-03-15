@@ -84,7 +84,7 @@ static int find_s5(fadt_t *fadt, uint8_t *typa, uint8_t *typb) {
     uint32_t len = ((acpi_header_t *)d)->length;
 
     for (uint32_t i = 0; i < len - 8; i++) {
-        if (!memcmp(d, "_S5_", 4)) continue;
+        if (memcmp(d + i, "_S5_", 4)) continue;
 
         uint8_t *p = d + i + 4;
         if (*p != 0x12) continue;                   // must be Package opcode
