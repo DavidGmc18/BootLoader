@@ -23,21 +23,21 @@ Bootloader memory can be freely reused once you no longer need any variables or 
 
 ## Boot Code
 
-Your boot code is loaded at `0x20000` according to the VBR parameters and handed off in 32-bit protected mode. The 384KiB range (`0x20000`–`0x80000`) is the hard limit enforced by the bootloader, but your program can freely use any available memory beyond that — keep the [x86 memory map](https://wiki.osdev.org/Memory_Map_(x86)) in mind.
+Your boot code is loaded at `0x20000` according to the boot header parameters and handed off in 32-bit protected mode. The 384KiB range (`0x20000`–`0x80000`) is the hard limit enforced by the bootloader, but your program can freely use any available memory beyond that — keep the [x86 memory map](https://wiki.osdev.org/Memory_Map_(x86)) in mind.
 
 The entry point is not expected to return. If it does, the system will halt.
 
 ## Volume Boot Record (VBR)
 
-The first sector of your partition must contain a valid VBR. The full sector struct is defined in `include/bl/boot.h` as `BL_BootSector`, which already places the VBR at the correct offset. The VBR struct and signature constant are defined in `include/bl/types.h`.
+The first sector of your partition (VBR) must contain a valid boot header. The full VBR struct is defined in `include/bl/boot.h` as `BL_VBR`, which already places the BL_BootHeader at the correct offset. The BL_BootHeader struct and signature constant are defined in `include/bl/types.h`.
 
-| Field          | Type       | Description                                  |
-|----------------|------------|----------------------------------------------|
-| `signature`    | `uint32_t` | Must match `BL_VBR_SIGNATURE` from `types.h` |
-| `boot_lba`     | `uint32_t` | Sector offset relative to partition start    |
-| `boot_sectors` | `uint16_t` | Number of sectors to load                    |
-| `entry_offset` | `uint32_t` | Byte offset from load address to entry point |
-| `name`         | `char[50]` | Name (currently unused)                      |
+| Field          | Type       | Description                                          |
+|----------------|------------|------------------------------------------------------|
+| `signature`    | `uint32_t` | Must match `BL_BOOT_HEADER_SIGNATURE` from `types.h` |
+| `boot_lba`     | `uint32_t` | Sector offset relative to partition start            |
+| `boot_sectors` | `uint16_t` | Number of sectors to load                            |
+| `entry_offset` | `uint32_t` | Byte offset from load address to entry point         |
+| `name`         | `char[50]` | Name (currently unused)                              |
 
 ## Entry
 

@@ -4,17 +4,17 @@ phys = 0x00020000;
 
 SECTIONS {
     . = 0;
-    .boot_sector : {
-        KEEP(*(.boot_sector))
+    .vbr : {
+        KEEP(*(.vbr))
     }
 
     . = phys;
-    .entry phys : AT(SIZEOF(.boot_sector)) {
+    .entry phys : AT(SIZEOF(.vbr)) {
         __entry_start = .;
         *(.entry)
     }
 
-    .text : AT(SIZEOF(.boot_sector) + SIZEOF(.entry)) {
+    .text : AT(SIZEOF(.vbr) + SIZEOF(.entry)) {
         __text_start = .;
         *(.text*)
     }

@@ -1,9 +1,9 @@
 #include <bl/boot.h>
 
-BL_BootSector boot_sector __attribute__((section(".boot_sector"))) = {
+BL_VBR vbr __attribute__((section(".vbr"))) = {
     .undefined = {0},
-    .vbr = {
-        .signature = BL_VBR_SIGNATURE,
+    .boot_header = {
+        .signature = BL_BOOT_HEADER_SIGNATURE,
         .boot_lba = 1,
         .boot_sectors = 10,
         .entry_offset = 0,

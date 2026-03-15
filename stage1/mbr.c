@@ -34,8 +34,8 @@ bool MBR_is_bootable(MBR_Entry entry, void* abar, uint8_t port) {
     if (AHCI_read(abar, port, (BL_LBA48){entry.lba}, 1, buffer))
         return false;
 
-    BL_BootSector* boot_sector = (BL_BootSector*)buffer;
-    if (boot_sector->boot_signature != BL_BOOT_SIGNATURE || boot_sector->vbr.signature != BL_VBR_SIGNATURE)
+    BL_VBR* vbr = (BL_VBR*)buffer;
+    if (vbr->boot_signature != BL_BOOT_SIGNATURE || vbr->boot_header.signature != BL_BOOT_HEADER_SIGNATURE)
         return false;
 
     return true;

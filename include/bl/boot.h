@@ -16,8 +16,8 @@ typedef struct {
 
 typedef struct {
     uint8_t undefined[446];
-    BL_VBR vbr;
+    BL_BootHeader boot_header;
     uint16_t boot_signature;
-} __attribute__((packed)) BL_BootSector;
+} __attribute__((packed)) BL_VBR;
 
-_Static_assert(sizeof(BL_BootSector) == 512, "BL_BootSector must be 512 bytes");
+_Static_assert(sizeof(BL_VBR) == 512, "BL_VBR must be 512 bytes");

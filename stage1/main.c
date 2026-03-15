@@ -159,13 +159,13 @@ void __attribute__((cdecl)) start() {
         printk("BOOT failed: failed to read disk!\n");
         goto end;
     }
-    BL_BootSector* boot_sector = (BL_BootSector*)buffer;
+    BL_VBR* vbr = (BL_VBR*)buffer;
 
     BL_LBA48 lba = {
-        .low = bootable_disk[CURSOR].partition.lba + boot_sector->vbr.boot_lba
+        .low = bootable_disk[CURSOR].partition.lba + vbr->boot_header.boot_lba
     };
 
-    uint32_t sectors = boot_sector->vbr.boot_sectors;
+    uint32_t sectors = vbr->boot_header.boot_sectors;
     if (sectors * 512 > ((uint32_t)&__os_size)) {
         printk("BOOT failed: requested too many sectors!\n");
         goto end;
@@ -184,7 +184,7 @@ void __attribute__((cdecl)) start() {
     boot_services.printk = printk;
     boot_services.disk_read = AHCI_read;
 
-    Entry entry = (Entry)(location + boot_sector->vbr.entry_offset);
+    Entry entry = (Entry)(location + vbr->boot_header.entry_offset);
     entry(&boot_info, &boot_services);
 
 end:
