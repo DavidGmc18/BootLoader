@@ -76,6 +76,10 @@ void __attribute__((cdecl)) start() {
     }
 
     VGA_clrscr();
+    if (bootable_disk_count == 0) {
+        printk("No bootable partitions!\n");
+        goto end;
+    }
     printk("Select partition:\n");
 
     for (uint8_t i = 0; i < bootable_disk_count; i++) {
@@ -88,11 +92,6 @@ void __attribute__((cdecl)) start() {
         } else {
             printk("(%d.%dGib)\n", bootable_disk[i].partition.sectors/2097152, (((uint64_t)bootable_disk[i].partition.sectors%2097152)*10)/2097152);
         }
-    }
-
-    if (bootable_disk_count == 0) {
-        printk("  No bootable partitions!\n");
-        goto end;
     }
 
     VGA_setcursor(0, 22);
@@ -187,8 +186,9 @@ void __attribute__((cdecl)) start() {
     Entry entry = (Entry)(location + vbr->boot_header.entry_offset);
     entry(&boot_info, &boot_services);
 
-end:
     VGA_clrscr();
+
+end:
     printk("Power-off your computer");
     while (1) i686_hlt();
     __builtin_unreachable();
