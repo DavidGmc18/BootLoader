@@ -2,7 +2,7 @@
 #include <stdint.h>
 
 extern uint8_t __bss_start;
-extern uint8_t __end;
+extern uint8_t __bss_end;
 
 void* memset(void* ptr, int value, uint16_t num) {
     uint8_t* u8Ptr = (uint8_t*)ptr;
@@ -13,8 +13,8 @@ void* memset(void* ptr, int value, uint16_t num) {
     return ptr;
 }
 
-void __attribute__((cdecl, section(".entry"))) entry(BL_BootInfo* boot_info, BL_BootServices* boot_services) {
-    memset(&__bss_start, 0, (&__end) - (&__bss_start));
+void __attribute__((cdecl, noreturn, section(".entry"))) entry(BL_BootInfo* boot_info, BL_BootServices* boot_services) {
+    memset(&__bss_start, 0, (&__bss_end) - (&__bss_start));
 
     // uint32_t esp;
     // __asm__ volatile("mov %%esp, %0" : "=r"(esp));

@@ -1,36 +1,33 @@
 ENTRY(entry)
 OUTPUT_FORMAT("binary")
-phys = 0x00020000;
+
+MEMORY {
+    BOOTLOADER (!rwx) : ORIGIN = 0x00000500, LENGTH = 0x00020000
+    RAM (rwx) :         ORIGIN = 0x00020000, LENGTH = 0x00080000
+}
 
 SECTIONS {
-    . = 0;
-    .vbr : {
+    .vbr : AT(0x0000) {
         KEEP(*(.vbr))
     }
+    ASSERT(SIZEOF(.vbr) <= 512, "ERROR: .vbr exceeds 512 bytes!")
 
-    . = phys;
-    .entry phys : AT(SIZEOF(.vbr)) {
-        __entry_start = .;
+    .text ORIGIN(RAM) : AT(0x0200) {
         *(.entry)
-    }
-
-    .text : AT(SIZEOF(.vbr) + SIZEOF(.entry)) {
-        __text_start = .;
-        *(.text*)
-    }
+        *(.text)
+    } > RAM
 
     .data : {
         *(.data)
-    }
+    } > RAM
 
     .rodata : {
         *(.rodata)
-    }
+    } > RAM
 
     .bss : {
         __bss_start = .;
         *(.bss)
-    }
-    
-    __end = .;
+        __bss_end = .;
+    } > RAM
 }
